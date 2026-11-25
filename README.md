@@ -86,7 +86,7 @@ napokat egyszer programoztatja be, a többire `COPY`-val másol. Ha mind a 7 nap
 | `web/app.js`, `index.html`, `style.css` | a felület |
 | `server.py` | stdlib HTTP-szerver, opcionális `/api/parse` AI-végpont |
 
-Tesztek: `node --test tests/`
+Tesztek: `node --test tests/*.test.mjs`
 
 **Korlátok:** a kis gombok (`SET`, `DAY`, `PROG`, `COPY`, `HOLD`, `LIGHT`) helyét az útmutató nem írja le,
 ezért az ábrán csak jelzésszerűek. Az időpontoknál az app a célértéket mutatja, nem a gombnyomások számát.

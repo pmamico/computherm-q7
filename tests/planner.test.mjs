@@ -1,4 +1,4 @@
-// node --test tests/
+// node --test tests/*.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { daySwitches, compile, buildPlan, parseTime, PRESETS, DAYS } from '../web/planner.js';
