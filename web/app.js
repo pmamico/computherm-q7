@@ -304,6 +304,8 @@ function renderStep() {
   $('#step-title').textContent = s.title;
   $('#step-keys').innerHTML = s.keys.map((k, i) => (i ? '<span class="then">→</span>' : '') + keyChip(k)).join('');
   if (s.keys.length > 1 && s.keys[0].how === 'hold') $('#step-keys').innerHTML = keyChip(s.keys[0]) + '<span class="then">+</span>' + s.keys.slice(1).map(keyChip).join('<span class="then">→</span>');
+  $('#step-info').hidden = !s.info;
+  $('#step-info').innerHTML = s.info ? `<span class="info-icon">ℹ️</span><div>${md(s.info)}</div>` : '';
   $('#step-hint').hidden = !s.hint;
   $('#step-hint').textContent = s.hint ? `💡 ${s.hint}` : '';
   $('#step-summary').hidden = !s.summary && !s.slotList;

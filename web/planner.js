@@ -379,23 +379,36 @@ export function buildPlan(state, opts = {}) {
       const fillers = item.slots.filter((x) => x.filler).length;
       if (fillers) {
         add(sec, 'Mi jön most?', [
-          `Ez a típus naponta mindig **mind a 6** kapcsolást (P1–P6) használja, kikapcsolni nem lehet. A programodhoz ${6 - fillers} kell, a maradék ${fillers}-${fillers === 1 ? 'et' : 'öt'} **kitöltésnek** teszem be: ugyanazt a hőfokot ismétlik, ami akkor amúgy is érvényes, így semmin nem változtatnak.`,
-          `A kitöltők helyét a gyári időpontokhoz közel választottam, hogy kevés gombnyomás kelljen.`,
-        ], [], { slotList: item.slots });
+          `A programodhoz ${6 - fillers} kapcsolás kell, de ${6} lépést mutatok: a maradék ${fillers} **kitöltés**.`,
+        ], [], {
+          slotList: item.slots,
+          info: `**Nem hiba:** ez a típus naponta mindig mind a 6 kapcsolást (P1–P6) használja, egyiket sem lehet kikapcsolni. Amit nem állítasz át, az a régi értékével működne tovább. A kitöltők ugyanazt a hőfokot ismétlik, ami akkor amúgy is érvényes, így semmin nem változtatnak. A gyári időpontjukon hagytam őket, hogy kevés gombnyomás kelljen.`,
+        });
       }
       item.slots.forEach((s, i) => {
         const n = i + 1, f = v.factory[i];
         const isLast = n === 6;
         Object.assign(lcd, { prog: `P${n}`, time: fmtTime(s.time), timeBlink: true, temp: null, tempBlink: false });
+        // kitöltőnél megmagyarázom, miért kell: különben hibának tűnik
+        const why = s.filler ? {
+          info: `**Miért kell ez, ha nincs a programodban?** Ez a típus mindig mind a 6 kapcsolást használja, egyiket sem lehet kikapcsolni. `
+            + `Ha ezt kihagynád, a P${n} a régi értékével maradna bekapcsolva (gyárilag ${fmtTime(f.time)}-kor ${fmtTemp(f.temp)} °C)`
+            + `${f.temp !== s.temp ? `, és elrontaná a napot` : ''}. Ezért ugyanarra a hőfokra állítom (${fmtTemp(s.temp)} °C), ami akkor amúgy is érvényes: így nem változtat semmin.`,
+        } : {};
         add(sec, `P${n}: ${fmtTime(s.time)}${s.filler ? ' (kitöltés)' : ''}`, [
-          `Villog a P${n} időpontja. \`+\` / \`−\`: **${fmtTime(s.time)}**, aztán \`PROG\`.`,
-          ...(s.filler ? ['Ez kitöltés: nem a te programod része, csak azért kell, mert ez a típus mindig 6 kapcsolást kér. A hőfok nem változik tőle.'] : []),
-        ], [dirKey(f.time, s.time), { key: 'PROG', how: 'tap', delay: 1.4 }], { hint: timeHint(f.time, s.time) });
+          f.time === s.time
+            ? `Villog a P${n} időpontja. Ha **${fmtTime(s.time)}** látszik (gyári érték), nem kell állítani: csak nyomd meg a \`PROG\`-ot. Ha más, \`+\` / \`−\`: **${fmtTime(s.time)}**.`
+            : `Villog a P${n} időpontja. \`+\` / \`−\`: **${fmtTime(s.time)}**, aztán \`PROG\`.`,
+        ], f.time === s.time ? [{ key: 'PROG', how: 'tap' }] : [dirKey(f.time, s.time), { key: 'PROG', how: 'tap', delay: 1.4 }],
+        { hint: f.time === s.time ? null : timeHint(f.time, s.time), ...why });
         Object.assign(lcd, { timeBlink: false, temp: lcdTemp(s.temp), tempBlink: true });
         add(sec, `P${n}: ${fmtTemp(s.temp)} °C${s.filler ? ' (kitöltés)' : ''}`, [
-          `Villog a hőfok. \`+\` / \`−\`: **${fmtTemp(s.temp)} °C**, aztán ${isLast ? '`SET` (mentés)' : '`PROG`'}.`,
+          f.temp === s.temp
+            ? `Villog a hőfok. Ha **${fmtTemp(s.temp)} °C** látszik (gyári érték), nem kell állítani: csak nyomd meg a ${isLast ? '`SET`-et (mentés)' : '`PROG`-ot'}. Ha más, \`+\` / \`−\`: **${fmtTemp(s.temp)} °C**.`
+            : `Villog a hőfok. \`+\` / \`−\`: **${fmtTemp(s.temp)} °C**, aztán ${isLast ? '`SET` (mentés)' : '`PROG`'}.`,
           ...(isLast ? ['Ez a hőfok másnap P1-ig marad érvényben.'] : []),
-        ], [dirKey(f.temp, s.temp), { key: isLast ? 'SET' : 'PROG', how: 'tap', delay: 1.4 }], { hint: pressHint(f.temp, s.temp, true) });
+        ], f.temp === s.temp ? [{ key: isLast ? 'SET' : 'PROG', how: 'tap' }] : [dirKey(f.temp, s.temp), { key: isLast ? 'SET' : 'PROG', how: 'tap', delay: 1.4 }],
+        { hint: f.temp === s.temp ? null : pressHint(f.temp, s.temp, true), ...why });
       });
     });
   }

@@ -220,3 +220,9 @@ footer a { color: var(--accent2); }
 }
 #next { min-width: 8.5em; white-space: nowrap; }
 #prev { min-width: 3.2em; }
+/* magyarázó buborék (pl. kitöltő kapcsolásoknál) */
+.info { display: flex; gap: 10px; align-items: flex-start; background: #e7f5ff; border: 1px solid #a5d8ff; border-radius: 12px;
+  padding: 10px 12px; margin: 10px 0; font-size: .92rem; line-height: 1.45; position: relative; }
+.info::before { content: ""; position: absolute; top: -7px; left: 22px; width: 12px; height: 12px; background: #e7f5ff;
+  border-left: 1px solid #a5d8ff; border-top: 1px solid #a5d8ff; transform: rotate(45deg); }
+.info-icon { font-size: 1.1rem; line-height: 1.3; }
