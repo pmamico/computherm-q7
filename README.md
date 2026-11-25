@@ -1,7 +1,7 @@
 # Computherm Q7 programozó
 
 Van egy **Computherm Q7** szobatermosztátod, és nem tudod, hogyan kell beprogramozni? Add meg, mikor hány fok
-legyen, és az app gombnyomásról gombnyomásra végigvezet a beállításon a termosztát animált előlapján.
+legyen, és az app végigvezet a beállításon a termosztát animált előlapján.
 
 ![Beállítás lépésről lépésre](docs/kepernyo-beallitas.png)
 
