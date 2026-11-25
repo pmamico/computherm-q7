@@ -75,7 +75,9 @@ export function showStep(root, step) {
   const temp = q('#lcd-temp');
   temp.textContent = lcd.temp ?? '';
   temp.classList.toggle('blink', !!lcd.tempBlink);
-  q('#lcd-room').textContent = lcd.room ?? '';
+  const room = q('#lcd-room');
+  room.textContent = lcd.room ?? '--.-';      // a mért szobahőmérsékletet nem ismerem
+  room.classList.toggle('dim', lcd.room == null);
   q('#lcd-mode').textContent = lcd.mode === 'cool' ? '❄' : '♨';
 
   root.querySelectorAll('.btn').forEach((b) => {

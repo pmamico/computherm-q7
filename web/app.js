@@ -283,10 +283,14 @@ function renderStep() {
   const draw = () => {
     const live = liveValues();
     const fill = (t) => t.replace(/\{(nap|óra|perc)\}/g, (_, k) => live[k]);
-    if (s.live === 'day') s.lcd.days = [live.code];
-    if (['hour', 'minute', 'clock'].includes(s.live)) { s.lcd.days = [live.code]; s.lcd.time = `${live.óra}:${live.perc}`; }
-    $('#step-body').innerHTML = s.body.map((p) => `<p>${md(fill(p))}</p>`).join('');
-    showStep($('#device'), s);
+    // minden frissítésnél az eredeti lépésből indulok, hogy az élő értékek (nap, idő) mindig aktuálisak legyenek
+    const st = structuredClone(s);
+    if (st.lcd.days?.includes('TODAY')) st.lcd.days = [live.code];
+    if (st.lcd.time === 'now') st.lcd.time = `${live.óra}:${live.perc}`;
+    if (st.live === 'day') st.lcd.days = [live.code];
+    if (['hour', 'minute', 'clock'].includes(st.live)) { st.lcd.days = [live.code]; st.lcd.time = `${live.óra}:${live.perc}`; }
+    $('#step-body').innerHTML = st.body.map((p) => `<p>${md(fill(p))}</p>`).join('');
+    showStep($('#device'), st);
   };
   $('#step-section').textContent = s.section;
   $('#step-count').textContent = `${stepIdx + 1} / ${plan.steps.length}`;
@@ -302,7 +306,7 @@ function renderStep() {
   $('#progress-bar').style.width = `${((stepIdx + 1) / plan.steps.length) * 100}%`;
   document.querySelectorAll('#step-list li').forEach((li, i) => { li.classList.toggle('current', i === stepIdx); li.classList.toggle('done', i < stepIdx); });
   draw();
-  if (s.live) liveTimer = setInterval(draw, 5000);
+  if (s.live || plan.steps[stepIdx].lcd.time === 'now') liveTimer = setInterval(draw, 5000);
 }
 
 // ---- indulás ------------------------------------------------------------------

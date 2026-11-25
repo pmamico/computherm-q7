@@ -220,16 +220,20 @@ export function compile(state) {
 
 // ---- lépések ---------------------------------------------------------------
 
-function pressHint(from, to, prefix = 'Gyári') {
-  if (from === to) return `${prefix} értéke is ennyi.`;
+// Tippek a nyomásszámhoz. Kiinduló érték: újabb típusnál az új kapcsoláshoz felkínált hőfok,
+// régi típusnál a gyári program értéke (ha a készüléken még az van).
+function pressHint(from, to, fixed) {
+  const start = fixed ? `Ha még a gyári program van benne, itt ${fmtTemp(from)} °C áll` : `A termosztát ${fmtTemp(from)} °C-ot kínál fel`;
+  if (from === to) return `${start}, ez pont jó.`;
   const n = Math.round(Math.abs(to - from) / TEMP_STEP);
-  return `${prefix} ${fmtTemp(from)} °C-ról ez ${n}× ${to > from ? '+' : '−'}.`;
+  return `${start}: ${n}× ${to > from ? '+' : '−'}. Ha mást mutat, a villogó értéket léptesd a célig.`;
 }
 
 function timeHint(from, to) {
-  if (from === to) return `Gyári értéke is ${fmtTime(to)}.`;
+  const start = `Ha még a gyári program van benne, itt ${fmtTime(from)} áll`;
+  if (from === to) return `${start}, ez pont jó.`;
   const n = Math.abs(to - from) / STEP_MIN;
-  return `Gyári ${fmtTime(from)}-ról ez ${n}× ${to > from ? '+' : '−'} (nyomva tartva gyorsabb lehet).`;
+  return `${start}: ${n}× ${to > from ? '+' : '−'} (nyomva tartva gyorsabb lehet).`;
 }
 
 const dirKey = (from, to) => ({ key: to >= from ? 'PLUS' : 'MINUS', how: 'repeat' });
@@ -251,11 +255,12 @@ export function buildPlan(state, opts = {}) {
   const D = (d) => `\`${dayLabel(v, d)}\``;
   const P = (n) => progLabel(v, n);
   const lp = (n) => (v.prog === 'P' ? `P${n}` : n);   // a kijelző programszám-mezője
-  const lcd = { days: ['MON'], daysBlink: false, time: '12:00', timeBlink: false, prog: fixed ? 'P1' : lp(0), temp: '20.0', tempBlink: false, room: '21.5', label: null, mode };
+  // a kijelzőn csak a valós (mai nap, pontos idő) vagy a beállított érték látszik; 'TODAY' és 'now' élőben töltődik ki
+  const lcd = { days: ['TODAY'], daysBlink: false, time: 'now', timeBlink: false, prog: null, temp: null, tempBlink: false, room: null, label: null, mode };
   const snap = () => JSON.parse(JSON.stringify(lcd));
   const add = (section, title, body, keys, extra = {}) => steps.push({ section, title, body, keys, lcd: snap(), ...extra });
   const home = (section) => {
-    Object.assign(lcd, { daysBlink: false, timeBlink: false, tempBlink: false, label: null, time: '12:00', prog: fixed ? 'P1' : lp(0), temp: '20.0' });
+    Object.assign(lcd, { days: ['TODAY'], daysBlink: false, timeBlink: false, tempBlink: false, label: null, time: 'now', prog: null, temp: null });
     add(section, 'Alaphelyzet', ['Nyomd meg a `SET`-et, hogy alaphelyzetben legyél.'], [{ key: 'SET', how: 'tap' }]);
   };
 
@@ -298,13 +303,13 @@ export function buildPlan(state, opts = {}) {
       : groups.flatMap((g) => g.days.map((d) => ({ ...g, days: [d] })));
 
   const enter = (sec) => {
-    Object.assign(lcd, { daysBlink: true, prog: null, temp: null, time: '12:00', label: null });
+    Object.assign(lcd, { daysBlink: true, prog: null, temp: null, time: 'now', label: null });
     add(sec, 'Programozás indítása', ['Tartsd nyomva a `SET`-et, és közben nyomd meg a `PROG`-ot. Villogni kezd a nap.'],
       [{ key: 'SET', how: 'hold' }, { key: 'PROG', how: 'tap', delay: 0.8 }]);
   };
   const selectDay = (sec, item) => {
     const many = item.days.length > 1;
-    Object.assign(lcd, { days: item.days, daysBlink: true, prog: null, temp: null, tempBlink: false, timeBlink: false, time: '12:00' });
+    Object.assign(lcd, { days: item.days, daysBlink: true, prog: null, temp: null, tempBlink: false, timeBlink: false, time: 'now' });
     add(sec, many ? 'Minden nap' : `Nap: ${DAY_HU[item.days[0]]}`, [
       many ? `\`+\` / \`−\`, amíg **mind a 7 nap** (${DAYS.map((d) => dayLabel(v, d)).join(' ')}) villog, aztán \`PROG\`.`
         : `\`+\` / \`−\`, amíg **csak a ${D(item.days[0])}** villog (${DAY_HU[item.days[0]]}), aztán \`PROG\`.`,
@@ -326,7 +331,7 @@ export function buildPlan(state, opts = {}) {
       Object.assign(lcd, { prog: lp(0), time: '00:00', temp: lcdTemp(sw[0].temp), tempBlink: true });
       add(sec, `${P(0)}: éjféltől ${fmtTemp(sw[0].temp)} °C`, [
         `Villog a hőfok. \`+\` / \`−\`: **${fmtTemp(sw[0].temp)} °C**, aztán \`PROG\`.`,
-      ], [dirKey(v.factoryTemp, sw[0].temp), { key: 'PROG', how: 'tap', delay: 1.4 }], { hint: pressHint(v.factoryTemp, sw[0].temp) });
+      ], [dirKey(v.factoryTemp, sw[0].temp), { key: 'PROG', how: 'tap', delay: 1.4 }], { hint: pressHint(v.factoryTemp, sw[0].temp, false) });
       for (let n = 1; n < sw.length; n++) {
         const { time, temp } = sw[n];
         Object.assign(lcd, { prog: lp(n), time: fmtTime(time), timeBlink: true, temp: null, tempBlink: false });
@@ -338,7 +343,7 @@ export function buildPlan(state, opts = {}) {
         Object.assign(lcd, { timeBlink: false, temp: lcdTemp(temp), tempBlink: true });
         add(sec, `${P(n)}: ${fmtTemp(temp)} °C`, [
           `Villog a hőfok. \`+\` / \`−\`: **${fmtTemp(temp)} °C**, aztán \`PROG\`.`,
-        ], [dirKey(v.factoryTemp, temp), { key: 'PROG', how: 'tap', delay: 1.4 }], { hint: pressHint(v.factoryTemp, temp) });
+        ], [dirKey(v.factoryTemp, temp), { key: 'PROG', how: 'tap', delay: 1.4 }], { hint: pressHint(v.factoryTemp, temp, false) });
       }
       const last = sw.length - 1;
       if (last < 6) {
@@ -352,7 +357,7 @@ export function buildPlan(state, opts = {}) {
         add(sec, 'A nap kész', ['Mind a 6 kapcsolás foglalt, a termosztát magától visszalép a napválasztásra.'], []);
       }
     });
-    Object.assign(lcd, { days: ['MON'], daysBlink: false, prog: lp(0), time: '12:00', timeBlink: false, temp: lcdTemp(toProgram[0].switches[0].temp), tempBlink: false });
+    Object.assign(lcd, { days: ['TODAY'], daysBlink: false, prog: null, time: 'now', timeBlink: false, temp: null, tempBlink: false });
     add('Programozás', 'Mentés', ['Nyomd meg a `SET`-et, és a program elmentődik.'], [{ key: 'SET', how: 'tap' }]);
   } else {
     // régi típusok: napi pontosan 6 kapcsolás (P1–P6); napokként külön programozási menet
@@ -373,7 +378,7 @@ export function buildPlan(state, opts = {}) {
         add(sec, `P${n}: ${fmtTemp(s.temp)} °C`, [
           `Villog a hőfok. \`+\` / \`−\`: **${fmtTemp(s.temp)} °C**, aztán ${isLast ? '`SET` (mentés)' : '`PROG`'}.`,
           ...(isLast ? ['Ez a hőfok másnap P1-ig marad érvényben.'] : []),
-        ], [dirKey(f.temp, s.temp), { key: isLast ? 'SET' : 'PROG', how: 'tap', delay: 1.4 }], { hint: pressHint(f.temp, s.temp) });
+        ], [dirKey(f.temp, s.temp), { key: isLast ? 'SET' : 'PROG', how: 'tap', delay: 1.4 }], { hint: pressHint(f.temp, s.temp, true) });
       });
     });
   }
@@ -395,7 +400,7 @@ export function buildPlan(state, opts = {}) {
         [{ key: 'PLUS', how: 'repeat' }, { key: 'COPY', how: 'tap', delay: 1.4 }]);
       done.push(d);
     });
-    Object.assign(lcd, { label: null, days: ['MON'], daysBlink: false, prog: fixed ? 'P1' : lp(0), temp: lcdTemp(item.switches[0].temp) });
+    Object.assign(lcd, { label: null, days: ['TODAY'], daysBlink: false, prog: null, temp: null, time: 'now' });
     add(sec, 'Mentés', ['Nyomd meg a `SET`-et.'], [{ key: 'SET', how: 'tap' }]);
   });
 
