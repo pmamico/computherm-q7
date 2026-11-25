@@ -72,14 +72,19 @@ function setDays(pi, days, on) {
   changed(true);
 }
 
-// visszavonás: minden módosítás előtti állapot
-const undo = [];
+// visszavonás / újra: állapot-pillanatképek
+const undo = [], redo = [];
 let lastState = null;
+function syncUndoButtons() {
+  $('#undo').disabled = !undo.length;
+  $('#redo').disabled = !redo.length;
+}
 function changed(rerender) {
   if (lastState !== null) undo.push(lastState);
   if (undo.length > 100) undo.shift();
+  redo.length = 0;
   lastState = JSON.stringify(state);
-  $('#undo').disabled = !undo.length;
+  syncUndoButtons();
   save();
   if (rerender) renderProfiles();
   renderWeek();
@@ -120,15 +125,30 @@ $('#preset').addEventListener('change', (e) => {
   changed(true);
 });
 
-$('#undo').addEventListener('click', () => {
-  if (!undo.length) return;
-  state = JSON.parse(undo.pop());
+function restore(from, to) {
+  if (!from.length) return;
+  to.push(lastState);
+  state = JSON.parse(from.pop());
   lastState = JSON.stringify(state);
-  $('#undo').disabled = !undo.length;
+  syncUndoButtons();
   save();
   renderVariant();
   renderProfiles();
   renderWeek();
+}
+const doUndo = () => restore(undo, redo);
+const doRedo = () => restore(redo, undo);
+$('#undo').addEventListener('click', doUndo);
+$('#redo').addEventListener('click', doRedo);
+
+// Ctrl+Z / Cmd+Z: vissza; Ctrl+Shift+Z / Cmd+Shift+Z / Ctrl+Y: újra.
+// Szövegmezőben a böngésző saját visszavonása marad.
+document.addEventListener('keydown', (e) => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+  if (e.target.matches('input, textarea, [contenteditable]') || !$('#view-plan').classList.contains('active')) return;
+  const k = e.key.toLowerCase();
+  if (k === 'z' && !e.shiftKey) { e.preventDefault(); doUndo(); }
+  else if ((k === 'z' && e.shiftKey) || (k === 'y' && !e.metaKey)) { e.preventDefault(); doRedo(); }
 });
 
 // ---- AI ---------------------------------------------------------------------
