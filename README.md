@@ -20,7 +20,8 @@ legyen, és az app végigvezet a beállításon a termosztát animált előlapj�
   | Q7 RF – rádiós (régi) | HOLD, DAY, LIGHT, TEST, COPY, PROG, SET |
 
 - **Heti program rajzolással**: napcsoportonként (pl. hétköznap / hétvége) egy grafikonon húzod be, mikor hány fok
-  legyen: vízszintes húzás = idősáv, függőleges = hőfok, koppintás = percre pontos finomhangolás. Mobilon is megy.
+  legyen: vízszintes húzás = idősáv, függőleges = hőfok. Egy sávra koppintva a széleit húzva szűkítheted/tágíthatod,
+  alatta percre pontosan finomhangolhatod. Mobilon is megy.
   Visszavonás: `Ctrl+Z` / `⌘Z`, újra: `Ctrl+Shift+Z` / `⌘⇧Z`.
   Figyelmeztet, ha egy napra több kapcsolás jutna, mint amennyit a Q7 tud (naponta 6).
 - **Lépésről lépésre útmutató**: a kijelzőn villog, amit éppen állítasz, a megnyomandó gomb ki van emelve.

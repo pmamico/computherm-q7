@@ -1,7 +1,8 @@
 // Grafikus napszerkesztő: vízszintesen az idő (0–24 h), függőlegesen a hőfok.
 //  - vízszintes húzás: a húzott idősáv a mutató magasságának megfelelő hőfokot kapja
 //  - függőleges húzás egy sávon: a sáv hőfoka változik
-//  - koppintás egy sávra: finomhangolás gombokkal (10 perc, 0,5 °C)
+//  - koppintás egy sávra: kijelölés; a kijelölt sáv széleit húzva szűkíthető/tágítható,
+//    alatta finomhangolás gombokkal (10 perc, 0,5 °C)
 import { SLOT_COUNT, runsOf, fmtTime, fmtTemp } from './planner.js';
 
 const H = 200, M = { l: 30, r: 6, t: 10, b: 22 };
@@ -77,6 +78,18 @@ export function mountDayEditor(root, { cells, variant, onChange }) {
     if (drag?.mode === 'paint') {
       g += `<rect class="paint" x="${xOf(drag.a)}" y="${M.t}" width="${xOf(drag.b) - xOf(drag.a)}" height="${plotH}"/>`;
     }
+    // kijelölt sáv: húzható fogantyúk a két szélén
+    const hs = drag?.mode?.startsWith('edge') ? { a: drag.a, b: drag.b } : drag?.mode ? null : sel;
+    if (hs) {
+      const t = cur[hs.a], yMid = (yOf(t) + H - M.b) / 2;
+      for (const [edge, slot] of [['a', hs.a], ['b', hs.b]]) {
+        if ((edge === 'a' && slot === 0) || (edge === 'b' && slot === SLOT_COUNT)) continue;
+        const x = xOf(slot);
+        g += `<line class="edge" x1="${x}" x2="${x}" y1="${M.t}" y2="${H - M.b}"/>`;
+        g += `<rect class="grip" x="${x - 6}" y="${yMid - 16}" width="12" height="32" rx="4"/>`;
+        g += `<line class="griplines" x1="${x - 2}" x2="${x - 2}" y1="${yMid - 8}" y2="${yMid + 8}"/><line class="griplines" x1="${x + 2}" x2="${x + 2}" y1="${yMid - 8}" y2="${yMid + 8}"/>`;
+      }
+    }
     svg.innerHTML = g;
   }
 
@@ -149,9 +162,26 @@ export function mountDayEditor(root, { cells, variant, onChange }) {
   const pt = (e) => { const b = svg.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
   svg.addEventListener('pointerdown', (e) => {
     e.preventDefault();
-    svg.setPointerCapture(e.pointerId);
+    try { svg.setPointerCapture(e.pointerId); } catch { /* szintetikus esemény */ }
     const p = pt(e);
-    drag = { x0: p.x, y0: p.y, orig: cur.slice(), mode: null };
+    drag = { x0: p.x, y0: p.y, orig: cur.slice(), mode: edgeAt(p.x, e.pointerType) };
+    if (drag.mode) { drag.s = { ...sel }; drag.a = sel.a; drag.b = sel.b; }
+  });
+  /** A kijelölt sáv melyik szélén van a mutató? ('edge-a' | 'edge-b' | null) */
+  function edgeAt(px, type) {
+    if (!sel) return null;
+    const tol = type === 'touch' ? 22 : 10;
+    const da = sel.a > 0 ? Math.abs(px - xOf(sel.a)) : Infinity;
+    const db = sel.b < SLOT_COUNT ? Math.abs(px - xOf(sel.b)) : Infinity;
+    if (Math.min(da, db) > tol) return null;
+    return da <= db ? 'edge-a' : 'edge-b';
+  }
+  // egérmutató: szélén ↔, kijelölt sávon ↕, máshol célkereszt
+  svg.addEventListener('pointermove', (e) => {
+    if (drag || e.pointerType !== 'mouse') return;
+    const p = pt(e);
+    const onSel = sel && cellAt(p.x) >= sel.a && cellAt(p.x) < sel.b;
+    svg.style.cursor = edgeAt(p.x, 'mouse') ? 'ew-resize' : onSel ? 'ns-resize' : 'crosshair';
   });
   svg.addEventListener('pointermove', (e) => {
     if (!drag) return;
@@ -159,8 +189,25 @@ export function mountDayEditor(root, { cells, variant, onChange }) {
     const dx = p.x - drag.x0, dy = p.y - drag.y0;
     if (!drag.mode && Math.hypot(dx, dy) > 6) drag.mode = Math.abs(dy) > Math.abs(dx) ? 'lift' : 'paint';
     if (!drag.mode) return;
-    const t = tempAt(p.y);
     cur = drag.orig.slice();
+    if (drag.mode.startsWith('edge')) {
+      const s = drag.s, o = drag.orig, temp = o[s.a];
+      if (drag.mode === 'edge-a') {
+        const na = Math.min(slotAt(xOf(s.a) + p.x - drag.x0), s.b - 1);   // a megfogás helyéhez képest mozdul
+        if (na < s.a) for (let k = na; k < s.a; k++) cur[k] = temp;
+        else for (let k = s.a; k < na; k++) cur[k] = o[s.a - 1];
+        drag.a = na; drag.b = s.b;
+      } else {
+        const nb = Math.max(slotAt(xOf(s.b) + p.x - drag.x0), s.a + 1);
+        if (nb > s.b) for (let k = s.b; k < nb; k++) cur[k] = temp;
+        else for (let k = nb; k < s.b; k++) cur[k] = o[s.b];
+        drag.a = s.a; drag.b = nb;
+      }
+      showTip(xOf(drag.mode === 'edge-a' ? drag.a : drag.b), `${hhmm(drag.a)}–${hhmm(drag.b)} · ${fmtTemp(temp)} °C`);
+      draw();
+      return;
+    }
+    const t = tempAt(p.y);
     if (drag.mode === 'lift') {
       const r = runAt(drag.orig, cellAt(drag.x0));
       for (let k = r.a; k < r.b; k++) cur[k] = t;
@@ -189,7 +236,7 @@ export function mountDayEditor(root, { cells, variant, onChange }) {
       renderRuns();
       return;
     }
-    const r = runAt(cur, d.mode === 'paint' ? d.a : d.a);
+    const r = runAt(cur, d.a);
     sel = r ? { a: r.a, b: r.b } : null;
     commit();
   };

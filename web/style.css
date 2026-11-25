@@ -190,3 +190,6 @@ table.summary td.filler { color: #aaa; }
   .nav button { padding: 10px 16px; }
 }
 #preset { max-width: 11em; min-width: 0; }
+.dayed .edge { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 3 3; pointer-events: none; }
+.dayed .grip { fill: #fff; stroke: var(--ink); stroke-width: 1.5; pointer-events: none; }
+.dayed .griplines { stroke: var(--ink); stroke-width: 1.2; pointer-events: none; }
