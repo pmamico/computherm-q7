@@ -195,3 +195,9 @@ table.summary td.filler { color: #aaa; }
 .dayed .grip { fill: #fff; stroke: var(--ink); stroke-width: 1.5; pointer-events: none; }
 .dayed .griplines { stroke: var(--ink); stroke-width: 1.2; pointer-events: none; }
 .lcd .dim { opacity: .25; }
+table.slots tr.filler td, table.slots tr.filler th { color: #999; }
+table.slots td:last-child { font-size: .8rem; text-align: left; }
+header p.version a { color: inherit; }
+footer { max-width: 1150px; margin: 0 auto; padding: 4px 20px 28px; font-size: .85rem; color: var(--muted); line-height: 1.6; }
+footer a { color: var(--accent2); }
+@media (max-width: 600px) { footer { padding: 0 12px 24px; } }

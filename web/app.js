@@ -277,6 +277,10 @@ function summaryHtml() {
   return `<table class="summary">${rows}</table>`;
 }
 
+function slotListHtml(slots) {
+  return `<table class="summary slots">${slots.map((x, i) => `<tr class="${x.filler ? 'filler' : ''}"><th>P${i + 1}</th><td>${fmtTime(x.time)}</td><td><b>${fmtTemp(x.temp)} °C</b></td><td>${x.filler ? 'kitöltés' : 'a programod része'}</td></tr>`).join('')}</table>`;
+}
+
 function renderStep() {
   clearInterval(liveTimer);
   const s = structuredClone(plan.steps[stepIdx]);
@@ -299,8 +303,8 @@ function renderStep() {
   if (s.keys.length > 1 && s.keys[0].how === 'hold') $('#step-keys').innerHTML = keyChip(s.keys[0]) + '<span class="then">+</span>' + s.keys.slice(1).map(keyChip).join('<span class="then">→</span>');
   $('#step-hint').hidden = !s.hint;
   $('#step-hint').textContent = s.hint ? `💡 ${s.hint}` : '';
-  $('#step-summary').hidden = !s.summary;
-  $('#step-summary').innerHTML = s.summary ? summaryHtml() : '';
+  $('#step-summary').hidden = !s.summary && !s.slotList;
+  $('#step-summary').innerHTML = s.summary ? summaryHtml() : s.slotList ? slotListHtml(s.slotList) : '';
   $('#prev').disabled = stepIdx === 0;
   $('#next').textContent = stepIdx === plan.steps.length - 1 ? 'Vissza a programhoz' : 'Tovább →';
   $('#progress-bar').style.width = `${((stepIdx + 1) / plan.steps.length) * 100}%`;

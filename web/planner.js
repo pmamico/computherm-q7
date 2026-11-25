@@ -144,26 +144,33 @@ export function runsOf(cells) {
 }
 
 /**
- * Régi típusok: pontosan 6 kapcsolás kell. Ha az előző nap ugyanazzal a hőfokkal ér véget, mint amivel ez kezdődik,
- * az éjféli pont elhagyható (a P6 hőfoka átnyúlik). A hiányzó helyeket „töltelék” kapcsolások egészítik ki,
- * amelyek nem változtatnak a hőfokon.
+ * Régi típusok: pontosan 6 kapcsolás kell (P1–P6, mind aktív). Ha az előző nap ugyanazzal a hőfokkal ér véget,
+ * mint amivel ez kezdődik, az éjféli pont elhagyható (a P6 hőfoka átnyúlik). A hiányzó helyekre „kitöltő”
+ * kapcsolások kerülnek, amelyek az adott időpontban amúgy is érvényes hőfokot ismétlik, tehát nem változtatnak
+ * semmin. A helyüket úgy választom (dinamikus programozással), hogy a gyári programhoz képest a lehető
+ * legkevesebb gombnyomás kelljen: így a kitöltők a gyári időpontok közelére kerülnek.
  */
-export function fixedSlots(switches, canDropMidnight) {
-  let pts = switches.map((s) => ({ ...s }));
-  if (canDropMidnight && pts.length > 1) pts = pts.slice(1);
-  if (pts.length > 6) return null;
-  while (pts.length < 6) {
-    let done = false;
-    for (let i = pts.length - 1; i >= 0 && !done; i--) {
-      const next = i + 1 < pts.length ? pts[i + 1].time : 1440;
-      if (next - pts[i].time >= 2 * STEP_MIN) {
-        pts.splice(i + 1, 0, { time: pts[i].time + STEP_MIN, temp: pts[i].temp, filler: true });
-        done = true;
-      }
+export function fixedSlots(switches, canDropMidnight, factory = OLD_FACTORY) {
+  let real = switches.map((s) => ({ ...s }));
+  if (canDropMidnight && real.length > 1) real = real.slice(1);
+  if (real.length > 6) return null;
+  const realAt = new Map(real.map((s) => [s.time, s]));
+  const tempAt = (t) => switches.reduce((v, s) => (s.time <= t ? s.temp : v), switches[0].temp);
+  const cost = (n, time, temp) => Math.abs(time - factory[n].time) / STEP_MIN + Math.abs(temp - factory[n].temp) / TEMP_STEP;
+  // dp[n]: a legolcsóbb n elemű, időrendben növekvő sorozat az eddig bejárt időpontokból
+  let dp = [{ cost: 0, path: [] }, null, null, null, null, null, null];
+  for (let t = 0; t < 1440; t += STEP_MIN) {
+    const isReal = realAt.has(t);
+    const next = isReal ? new Array(7).fill(null) : dp.slice();   // valódi pontot nem lehet kihagyni
+    const temp = isReal ? realAt.get(t).temp : tempAt(t);
+    for (let n = 0; n < 6; n++) {
+      if (!dp[n]) continue;
+      const c = dp[n].cost + cost(n, t, temp);
+      if (!next[n + 1] || c < next[n + 1].cost) next[n + 1] = { cost: c, path: [...dp[n].path, { time: t, temp, filler: !isReal }] };
     }
-    if (!done) return null;
+    dp = next;
   }
-  return pts;
+  return dp[6]?.path ?? null;
 }
 
 /**
@@ -210,7 +217,10 @@ export function compile(state) {
         const prev = days[DAYS[(DAYS.indexOf(d) + 6) % 7]];
         return prev && prev.at(-1).temp === start;
       });
-      g.slots = fixedSlots(g.switches, canDrop);
+      g.slots = fixedSlots(g.switches, canDrop, v.factory);
+      const fillers = g.slots ? g.slots.filter((x) => x.filler).length : 0;
+      if (fillers)
+        issues.push({ level: 'info', text: `${g.days.length === 7 ? 'Minden nap' : g.days.map((d) => DAY_HU[d]).join(', ')}: ${6 - fillers} valódi kapcsolás kell, de ez a típus mindig 6-ot használ, ezért ${fillers} kitöltő kapcsolást is beteszek. Ezek ugyanazt a hőfokot ismétlik, ami akkor amúgy is érvényes.` });
       if (!g.slots)
         issues.push({ level: 'error', text: `${g.days.map((d) => DAY_HU[d]).join(', ')}: ez a típus naponta pontosan 6 kapcsolást tud, ehhez túl sok a váltás. Vonj össze sávokat.` });
     }
@@ -366,16 +376,23 @@ export function buildPlan(state, opts = {}) {
       home(sec);
       enter(sec);
       selectDay(sec, item);
+      const fillers = item.slots.filter((x) => x.filler).length;
+      if (fillers) {
+        add(sec, 'Mi jön most?', [
+          `Ez a típus naponta mindig **mind a 6** kapcsolást (P1–P6) használja, kikapcsolni nem lehet. A programodhoz ${6 - fillers} kell, a maradék ${fillers}-${fillers === 1 ? 'et' : 'öt'} **kitöltésnek** teszem be: ugyanazt a hőfokot ismétlik, ami akkor amúgy is érvényes, így semmin nem változtatnak.`,
+          `A kitöltők helyét a gyári időpontokhoz közel választottam, hogy kevés gombnyomás kelljen.`,
+        ], [], { slotList: item.slots });
+      }
       item.slots.forEach((s, i) => {
         const n = i + 1, f = v.factory[i];
         const isLast = n === 6;
         Object.assign(lcd, { prog: `P${n}`, time: fmtTime(s.time), timeBlink: true, temp: null, tempBlink: false });
-        add(sec, `P${n}: ${fmtTime(s.time)}`, [
+        add(sec, `P${n}: ${fmtTime(s.time)}${s.filler ? ' (kitöltés)' : ''}`, [
           `Villog a P${n} időpontja. \`+\` / \`−\`: **${fmtTime(s.time)}**, aztán \`PROG\`.`,
-          ...(s.filler ? ['(Ezt csak kitöltésnek tettem be: a hőfok nem változik, de ez a típus mindig 6 kapcsolást kér.)'] : []),
+          ...(s.filler ? ['Ez kitöltés: nem a te programod része, csak azért kell, mert ez a típus mindig 6 kapcsolást kér. A hőfok nem változik tőle.'] : []),
         ], [dirKey(f.time, s.time), { key: 'PROG', how: 'tap', delay: 1.4 }], { hint: timeHint(f.time, s.time) });
         Object.assign(lcd, { timeBlink: false, temp: lcdTemp(s.temp), tempBlink: true });
-        add(sec, `P${n}: ${fmtTemp(s.temp)} °C`, [
+        add(sec, `P${n}: ${fmtTemp(s.temp)} °C${s.filler ? ' (kitöltés)' : ''}`, [
           `Villog a hőfok. \`+\` / \`−\`: **${fmtTemp(s.temp)} °C**, aztán ${isLast ? '`SET` (mentés)' : '`PROG`'}.`,
           ...(isLast ? ['Ez a hőfok másnap P1-ig marad érvényben.'] : []),
         ], [dirKey(f.temp, s.temp), { key: isLast ? 'SET' : 'PROG', how: 'tap', delay: 1.4 }], { hint: pressHint(f.temp, s.temp, true) });

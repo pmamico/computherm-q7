@@ -134,3 +134,27 @@ test('cellák ↔ profil oda-vissza', () => {
   assert.deepEqual(back, { base_temp: 19, periods: [{ from: '20:00', to: '24:00', temp: 21 }] });
   assert.equal(runsOf(dayCells({ base_temp: 19, periods: [{ from: '06:00', to: '08:00', temp: 21 }] })).length, 3);
 });
+
+test('régi típus: a 6 kapcsolás pontosan a rajzolt lefutást adja, a kitöltők a gyári időpontokra kerülnek', () => {
+  const cases = [
+    { base_temp: 19.5, periods: [{ from: '05:50', to: '21:30', temp: 22.5 }] },   // a hibajelentés esete
+    { base_temp: 18, periods: [{ from: '06:00', to: '22:00', temp: 21 }] },
+    PRESETS.kezikonyv.state.profiles[0],
+    { base_temp: 21, periods: [{ from: '22:00', to: '06:00', temp: 18 }] },
+  ];
+  for (const prof of cases) {
+    const plan = buildPlan({ variant: 'q7rf', profiles: [{ ...prof, days: DAYS }] });
+    assert.ok(plan.ok);
+    const slots = plan.groups[0].slots;
+    assert.equal(slots.length, 6);
+    for (let i = 1; i < 6; i++) assert.ok(slots[i].time > slots[i - 1].time);
+    // a nap minden 10 percére: az utolsó, már elindult kapcsolás hőfoka (előtte a P6 hőfoka, előző napról)
+    const cells = dayCells(prof);
+    for (let c = 0; c < 144; c++) {
+      const active = slots.filter((x) => x.time <= c * 10).at(-1) ?? slots[5];
+      assert.equal(active.temp, cells[c], `${JSON.stringify(prof)} @ ${c * 10}`);
+    }
+  }
+  const s = buildPlan({ variant: 'q7rf', profiles: [{ ...cases[0], days: DAYS }] }).groups[0].slots;
+  assert.deepEqual(s.filter((x) => x.filler).map((x) => x.time), [540, 750, 900, 1050]);   // 9:00, 12:30, 15:00, 17:30
+});
