@@ -69,32 +69,6 @@ Claude Haiku 5.5-tel nagyjából 1,5 ezer bemeneti és 0,3 ezer kimeneti token, 
 
 A modell a `Q7_AI_MODEL` változóval cserélhető.
 
-## Hogyan működik
-
-A szabályokat a gyártó (Quantrax Kft.) kezelési útmutatóiból modelleztem
-([újabb Q7](https://files.szerelvenybolt.hu/pdf_2019/Computherm/Computherm_Q7_hasznalati_utasitas.pdf), valamint a régi Q7 és Q7 RF füzetei),
-összefoglalva a [`docs/q7-modell.md`](docs/q7-modell.md) fájlban. Két logika van:
-
-- **újabb Q7**: naponta egy rögzített kapcsolás (`PROG 0`/`P0`, 00:00) és 6 szabad, kikapcsolható;
-- **régi Q7 és Q7 RF**: naponta pontosan 6 kapcsolás (P1–P6), a P6 hőfoka másnap P1-ig tart.
-
-Az időpontok 10 percenként, a hőfok 0,5 fokonként állítható. Az app a napot 10 perces cellákra bontja,
-a hőfokváltásokból képzi a kapcsolásokat, a régi típusoknál pedig ártalmatlan „töltelék” kapcsolásokkal egészít ki 6-ra. Az azonos programú
-napokat egyszer programoztatja be, a többire `COPY`-val másol. Ha mind a 7 nap egyforma, mindet egyszerre állítja.
-
-| Fájl | Mi van benne |
-|---|---|
-| `web/planner.js` | programozási modell és lépésgenerátor (böngészőben és node-ban is fut) |
-| `web/thermostat.js` | a termosztát előlapjának animálható SVG-je |
-| `web/dayeditor.js` | a húzható napi hőfok-szerkesztő |
-| `web/app.js`, `index.html`, `style.css` | a felület |
-| `server.py` | stdlib HTTP-szerver, opcionális `/api/parse` AI-végpont |
-
-Tesztek: `node --test tests/*.test.mjs`
-
-**Korlátok:** a kis gombok (`SET`, `DAY`, `PROG`, `COPY`, `HOLD`, `LIGHT`) helyét az útmutató nem írja le,
-ezért az ábrán csak jelzésszerűek. Az időpontoknál az app a célértéket mutatja, nem a gombnyomások számát.
-
 A Computherm a Quantrax Kft. védjegye. Ez egy független hobbiprojekt, nincs kapcsolatban a gyártóval.
 
 ## Licenc
