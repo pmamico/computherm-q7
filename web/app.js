@@ -1,6 +1,7 @@
 import { DAYS, DAY_HU, DAY_SHORT, PRESETS, VARIANTS, dayCells, cellsToProfile, DEFAULT_VARIANT, variantOf, dayLabel, progLabel, compile, buildPlan, fmtTime, fmtTemp, parseTime } from './planner.js';
 import { thermostatSvg, showStep, keyLabel } from './thermostat.js';
 import { mountDayEditor, tempColor } from './dayeditor.js';
+import { VERSION } from './version.js';
 
 const $ = (s) => document.querySelector(s);
 const STORE = 'q7-state-v1';
@@ -96,7 +97,7 @@ function renderWeek() {
   const hours = Array.from({ length: 9 }, (_, i) => `<span style="left:${(i * 3) / 24 * 100}%">${i * 3}</span>`).join('');
   $('#week').innerHTML = `<div class="week-row axis"><span></span><div class="bar">${hours}</div><span></span></div>` + DAYS.map((d) => {
     const sw = c.days[d];
-    if (!sw) return `<div class="week-row"><span>${DAY_SHORT[d]}</span><div class="bar empty">nincs megadva – marad a régi</div><span></span></div>`;
+    if (!sw) return `<div class="week-row"><span>${DAY_SHORT[d]}</span><div class="bar empty">nincs megadva – nem nyúlok hozzá</div><span></span></div>`;
     const segs = sw.map((s, i) => {
       const end = i + 1 < sw.length ? sw[i + 1].time : 1440;
       const w = (end - s.time) / 1440 * 100;
@@ -164,13 +165,13 @@ $('#ai-go').addEventListener('click', async () => {
   try {
     const r = await fetch('api/parse', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
     const data = await r.json();
-    if (!r.ok) throw new Error(data.error || 'Hiba történt.');
+    if (!r.ok) throw new Error(data.error || 'Valami hiba történt nálam.');
     // egységes "HH:MM" alak: "6" → "06:00"
     const hhmm = (t) => { const m = parseTime(t); return m === null ? t : fmtTime(m); };
     data.profiles.forEach((p) => p.periods.forEach((x) => { x.from = hhmm(x.from); x.to = hhmm(x.to); }));
     state = { variant: state.variant, mode: data.mode, profiles: data.profiles.length ? data.profiles : state.profiles };
     $('#opt-mode').checked = data.mode === 'cool';
-    $('#ai-msg').textContent = '✅ Kész, lent átírhatod.';
+    $('#ai-msg').textContent = '✅ Beírtam lent, ott átírhatod.';
     $('#ai-notes').hidden = !data.notes;
     $('#ai-notes').textContent = data.notes ? `💡 ${data.notes}` : '';
     changed(true);
@@ -305,6 +306,7 @@ function renderStep() {
 }
 
 // ---- indulás ------------------------------------------------------------------
+$('#version').textContent = `v${VERSION}`;
 $('#opt-mode').checked = state.mode === 'cool';
 renderVariant();
 renderProfiles();

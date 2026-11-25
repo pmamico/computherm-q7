@@ -64,7 +64,7 @@ A kimenet szerkezete:
   (pl. from 22:00, to 06:00). Azonos programú napokat egy csoportba tegyél. Minden napnak szerepelnie kell
   pontosan egy csoportban (ha a felhasználó nem említ egy napot, használd a hozzá leginkább illő csoportot,
   és írd meg a notes-ban).
-- notes: 1-3 rövid magyar mondat arról, mit feltételeztél (pl. alapértelmezett hőfokok, kitöltött napok).
+- notes: 1-3 rövid magyar mondat, egyes szám első személyben és tegezve (pl. "Hétvégére 22 fokot vettem."), arról, mit feltételeztél (pl. alapértelmezett hőfokok, kitöltött napok).
   Ha mindent egyértelműen megadott, legyen rövid.
 
 A készülék korlátai: hőfok 5–40 °C, 0,5 fokos lépés; időpontok 10 perces lépésben; naponta legfeljebb 6 hőfokváltás
@@ -108,7 +108,7 @@ def parse_wish(text, client=None):
 
     if client is None:
         if not os.environ.get("ANTHROPIC_API_KEY"):
-            raise AiError("Nincs beállítva AI-kulcs (ANTHROPIC_API_KEY).")
+            raise AiError("Nincs AI-kulcsom (ANTHROPIC_API_KEY), így szöveget nem tudok értelmezni.")
         workspace = os.environ.get("ANTHROPIC_WORKSPACE_ID")
         client = anthropic.Anthropic(default_headers={"anthropic-workspace-id": workspace} if workspace else None,
                                      timeout=60.0)
@@ -121,24 +121,24 @@ def parse_wish(text, client=None):
             output_config={"effort": "low", "format": {"type": "json_schema", "schema": SCHEMA}},
         )
     except anthropic.RateLimitError:
-        raise AiError("Az AI most túlterhelt, próbáld újra pár perc múlva.") from None
+        raise AiError("Most nem érem el az AI-t, mert túlterhelt. Próbáld újra pár perc múlva.") from None
     except anthropic.AuthenticationError:
-        raise AiError("Az AI-kulcs érvénytelen.") from None
+        raise AiError("Érvénytelen az AI-kulcsom.") from None
     except anthropic.APIStatusError as error:
         raise AiError(f"AI hiba ({error.status_code}): {str(error.message)[:200]}") from None
     except anthropic.APIConnectionError:
-        raise AiError("Az AI szolgáltatás nem érhető el (hálózat).") from None
+        raise AiError("Nem érem el az AI-szolgáltatást (hálózati hiba).") from None
     usage = response.usage
     print(f"ai: {MODEL} in={usage.input_tokens} out={usage.output_tokens} stop={response.stop_reason}", flush=True)
     if response.stop_reason == "refusal":
-        raise AiError("Az AI ezt a kérést nem dolgozta fel.")
+        raise AiError("Ezt a kérést nem tudom feldolgozni.")
     if response.stop_reason == "max_tokens":
-        raise AiError("Az AI válasza túl hosszú lett, fogalmazd meg röviden.")
+        raise AiError("Túl hosszú választ kaptam, fogalmazd meg röviden.")
     text_out = next((b.text for b in response.content if b.type == "text"), "")
     try:
         data = json.loads(text_out)
     except json.JSONDecodeError:
-        raise AiError("Az AI válasza nem értelmezhető.") from None
+        raise AiError("Nem értem az AI válaszát, próbáld újra.") from None
     return sanitize(data)
 
 
@@ -188,22 +188,22 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         if self.path != "/api/parse":
-            return self.send_json({"error": "Nincs ilyen végpont."}, HTTPStatus.NOT_FOUND)
+            return self.send_json({"error": "Ilyen végpontom nincs."}, HTTPStatus.NOT_FOUND)
         try:
             length = int(self.headers.get("Content-Length") or 0)
             if length > 20_000:
-                return self.send_json({"error": "Túl hosszú kérés."}, HTTPStatus.REQUEST_ENTITY_TOO_LARGE)
+                return self.send_json({"error": "Ez túl hosszú nekem."}, HTTPStatus.REQUEST_ENTITY_TOO_LARGE)
             text = str(json.loads(self.rfile.read(length) or b"{}").get("text", "")).strip()
         except (ValueError, AttributeError):
-            return self.send_json({"error": "Hibás kérés."}, HTTPStatus.BAD_REQUEST)
+            return self.send_json({"error": "Nem értem a kérést."}, HTTPStatus.BAD_REQUEST)
         if not text:
             return self.send_json({"error": "Írd le, mit szeretnél."}, HTTPStatus.BAD_REQUEST)
         if len(text) > MAX_TEXT:
             return self.send_json({"error": f"Legfeljebb {MAX_TEXT} karakter."}, HTTPStatus.BAD_REQUEST)
         if not ai_enabled():
-            return self.send_json({"error": "Az AI-értelmezés nincs bekapcsolva."}, HTTPStatus.NOT_FOUND)
+            return self.send_json({"error": "Itt nem tudok szöveget értelmezni (nincs AI-kulcsom)."}, HTTPStatus.NOT_FOUND)
         if not rate_ok():
-            return self.send_json({"error": "Túl sok kérés, várj egy percet."}, HTTPStatus.TOO_MANY_REQUESTS)
+            return self.send_json({"error": "Túl sok kérést kaptam, várj egy percet."}, HTTPStatus.TOO_MANY_REQUESTS)
         try:
             return self.send_json(parse_wish(text))
         except AiError as error:

@@ -48,7 +48,7 @@ export function thermostatSvg(v) {
   <text x="560" y="288" class="brand" text-anchor="end">COMPUTHERM</text>
   <text x="560" y="303" class="brand-sub" text-anchor="end">${v.radio ? 'Wireless Thermo Control System' : 'Thermo Control System'}</text>
   <rect x="52" y="326" width="496" height="62" rx="14" fill="#e9e9e9" stroke="#c9c9c9"/>
-  <text x="300" y="398" class="strip-label" text-anchor="middle">kis gombok (az elrendezés jelzésszerű)</text>
+  <text x="300" y="398" class="strip-label" text-anchor="middle">kis gombok (a helyüket csak jelzésszerűen rajzoltam)</text>
   ${small}
 </svg>`;
 }

@@ -80,7 +80,7 @@ export const progLabel = (v, n) => (v.prog === 'PROG' ? `PROG ${n}` : `P${n}`);
 
 /**
  * Egy profil (alaphőfok + idősávok) → a nap hőfokváltásai [{time, temp}], az első mindig 00:00.
- * A napot 144 db 10 perces cellára bontjuk; a később felsorolt sáv felülírja a korábbit;
+ * A napot 144 db 10 perces cellára bontom; a később felsorolt sáv felülírja a korábbit;
  * az éjfélen átnyúló sáv (pl. 22:00–06:00) a nap elejére és végére is kerül.
  */
 export function daySwitches(profile, issues = [], v = VARIANTS[DEFAULT_VARIANT]) {
@@ -192,7 +192,7 @@ export function compile(state) {
   });
   const missing = DAYS.filter((d) => !days[d]);
   if (missing.length && missing.length < 7)
-    issues.push({ level: 'warn', text: `Nincs megadva: ${missing.map((d) => DAY_HU[d]).join(', ')} (ezek maradnak, ahogy vannak).` });
+    issues.push({ level: 'warn', text: `Nincs megadva: ${missing.map((d) => DAY_HU[d]).join(', ')} (ezekhez nem nyúlok).` });
   if (missing.length === 7) issues.push({ level: 'error', text: 'Egyik naphoz sincs program.' });
 
   const groups = [];
@@ -367,7 +367,7 @@ export function buildPlan(state, opts = {}) {
         Object.assign(lcd, { prog: `P${n}`, time: fmtTime(s.time), timeBlink: true, temp: null, tempBlink: false });
         add(sec, `P${n}: ${fmtTime(s.time)}`, [
           `Villog a P${n} időpontja. \`+\` / \`−\`: **${fmtTime(s.time)}**, aztán \`PROG\`.`,
-          ...(s.filler ? ['(Ez csak kitöltés: ugyanaz a hőfok marad, mert ez a típus mindig 6 kapcsolást használ.)'] : []),
+          ...(s.filler ? ['(Ezt csak kitöltésnek tettem be: a hőfok nem változik, de ez a típus mindig 6 kapcsolást kér.)'] : []),
         ], [dirKey(f.time, s.time), { key: 'PROG', how: 'tap', delay: 1.4 }], { hint: timeHint(f.time, s.time) });
         Object.assign(lcd, { timeBlink: false, temp: lcdTemp(s.temp), tempBlink: true });
         add(sec, `P${n}: ${fmtTemp(s.temp)} °C`, [

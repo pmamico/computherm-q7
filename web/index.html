@@ -10,7 +10,8 @@
 <body>
 <header>
   <h1>🌡️ Computherm Q7 programozó</h1>
-  <p>Add meg, mikor hány fok legyen, és megmutatjuk, mit nyomj meg a termosztáton.</p>
+  <p class="version" id="version"></p>
+  <p>Add meg, mikor hány fok legyen, és megmutatom, mit nyomj meg a termosztáton.</p>
   <nav>
     <button class="tab active" data-view="plan">1. Program</button>
     <button class="tab" data-view="guide">2. Beállítás</button>
@@ -22,7 +23,7 @@
   <section id="view-plan" class="view active">
     <div class="card">
       <h2>🔎 Melyik termosztátod van?</h2>
-      <p class="muted">Nézd meg a kis gombok feliratát a készüléken. A változatok másképp programozhatók.</p>
+      <p class="muted">Nézd meg a kis gombok feliratát a készüléken. Mindegyik változatot kicsit másképp kell programozni, ehhez igazítom a lépéseket.</p>
       <div id="variants" class="variants"></div>
     </div>
 
@@ -93,7 +94,7 @@
   <section id="view-info" class="view">
     <div class="card">
       <div id="cheat"></div>
-      <p class="muted">A gombsorozatok a gyártó <a href="https://files.szerelvenybolt.hu/pdf_2019/Computherm/Computherm_Q7_hasznalati_utasitas.pdf" target="_blank" rel="noopener">kezelési útmutatóin</a> alapulnak (újabb Q7, illetve a régi Q7 és Q7 RF füzetei). A kis gombok helye az ábrán csak jelzésszerű.</p>
+      <p class="muted">A gombsorozatokat a gyártó <a href="https://files.szerelvenybolt.hu/pdf_2019/Computherm/Computherm_Q7_hasznalati_utasitas.pdf" target="_blank" rel="noopener">kezelési útmutatóiból</a> állítottam össze (újabb Q7, illetve a régi Q7 és Q7 RF füzetei). A kis gombok helyét az ábrán csak jelzésszerűen rajzoltam meg.</p>
     </div>
   </section>
 </main>

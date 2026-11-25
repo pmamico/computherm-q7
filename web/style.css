@@ -9,6 +9,7 @@ body { margin: 0; }
 header { padding: 18px 20px 0; max-width: 1150px; margin: 0 auto; }
 header h1 { margin: 0; font-size: 1.6rem; }
 header p { margin: 4px 0 12px; color: var(--muted); }
+header p.version { margin: 0; font-size: .72rem; color: #aaa; letter-spacing: .3px; }
 nav { display: flex; gap: 6px; flex-wrap: wrap; }
 .tab { border: 0; background: transparent; padding: 10px 14px; border-radius: 10px 10px 0 0; font-size: 1rem; cursor: pointer; color: var(--muted); }
 .tab.active { background: var(--card); color: var(--ink); font-weight: 600; }
