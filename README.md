@@ -26,6 +26,8 @@ legyen, és az app végigvezet a beállításon a termosztát animált előlapj�
   Figyelmeztet, ha egy napra több kapcsolás jutna, mint amennyit a Q7 tud (naponta 6).
 - **Lépésről lépésre útmutató**: a kijelzőn villog, amit éppen állítasz, a megnyomandó gomb ki van emelve.
   Benne van a pontos idő beállítása, a programozás, az azonos napok másolása (`COPY`) és az ellenőrzés is.
+  Ha sokáig nem lépsz tovább, szól (hanggal is), mielőtt a termosztát magától kilépne a menüből.
+  Billentyűk: Enter / szóköz / → = tovább, ← = vissza.
 - **Puska**: party, szabadság és tartós hőfok, gombzár, kalibrálás.
 - **Opcionális AI**: szabad szövegből („hétköznap 6–8 és 16–22 között 21,5 fok, egyébként 18”) tölti ki
   a programot. Kulcs nélkül ez a rész egyszerűen nem jelenik meg.

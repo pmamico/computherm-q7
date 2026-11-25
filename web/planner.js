@@ -19,25 +19,25 @@ export const VARIANTS = {
     name: 'Q7 – újabb', short: 'Q7',
     hint: 'Napok betűvel (MON, TUE…), van PROG 0 (00:00).',
     logic: 'p0', dayLabels: 'names', prog: 'PROG', buttons: NEW_BUTTONS,
-    minTemp: 5, maxTemp: 40, copySeconds: 3, hasMode: true, factoryTemp: 20,
+    minTemp: 5, maxTemp: 40, copySeconds: 3, hasMode: true, factoryTemp: 20, timeouts: { set: 15, prog: 60, copy: 15 },
   },
   q7num: {
     name: 'Q7 – „új szoftverrel”', short: 'Q7 (új szoftver)',
     hint: 'Napok számmal (1–7), van P0 (00:00).',
     logic: 'p0', dayLabels: 'numbers', prog: 'P', buttons: NEW_BUTTONS,
-    minTemp: 5, maxTemp: 35, copySeconds: 3, hasMode: true, factoryTemp: 20,
+    minTemp: 5, maxTemp: 35, copySeconds: 3, hasMode: true, factoryTemp: 20, timeouts: { set: 15, prog: 60, copy: 15 },
   },
   q7old: {
     name: 'Q7 – régi', short: 'Q7 (régi)',
     hint: 'Napok számmal (1–7), fixen 6 kapcsolás (P1–P6).',
     logic: 'fixed6', dayLabels: 'numbers', prog: 'P', buttons: ['HOLD', 'DAY', 'LIGHT', 'RESET', 'COPY', 'PROG', 'SET'],
-    minTemp: 7, maxTemp: 35, copySeconds: 5, hasMode: false, factory: OLD_FACTORY,
+    minTemp: 7, maxTemp: 35, copySeconds: 5, hasMode: false, factory: OLD_FACTORY, timeouts: { set: 10, prog: 10, copy: 15 },
   },
   q7rf: {
     name: 'Q7 RF – rádiós (régi)', short: 'Q7 RF',
     hint: 'Vezeték nélküli, külön vevővel. Napok számmal (1–7), fixen 6 kapcsolás.',
     logic: 'fixed6', dayLabels: 'numbers', prog: 'P', buttons: ['HOLD', 'DAY', 'LIGHT', 'TEST', 'COPY', 'PROG', 'SET'],
-    minTemp: 7, maxTemp: 35, copySeconds: 5, hasMode: false, factory: OLD_FACTORY, radio: true,
+    minTemp: 7, maxTemp: 35, copySeconds: 5, hasMode: false, factory: OLD_FACTORY, radio: true, timeouts: { set: 10, prog: 10, copy: 15 },
   },
 };
 export const DEFAULT_VARIANT = 'q7';
@@ -268,20 +268,24 @@ export function buildPlan(state, opts = {}) {
   // a kijelzőn csak a valós (mai nap, pontos idő) vagy a beállított érték látszik; 'TODAY' és 'now' élőben töltődik ki
   const lcd = { days: ['TODAY'], daysBlink: false, time: 'now', timeBlink: false, prog: null, temp: null, tempBlink: false, room: null, label: null, mode };
   const snap = () => JSON.parse(JSON.stringify(lcd));
-  const add = (section, title, body, keys, extra = {}) => steps.push({ section, title, body, keys, lcd: snap(), ...extra });
+  // menu: hány mp tétlenség után lép ki magától a termosztát abból a menüből, amiben a lépés közben van (null: nincs menüben)
+  let menu = null;
+  const add = (section, title, body, keys, extra = {}) => steps.push({ section, title, body, keys, lcd: snap(), timeout: menu, ...extra });
   const home = (section) => {
+    menu = null;
     Object.assign(lcd, { days: ['TODAY'], daysBlink: false, timeBlink: false, tempBlink: false, label: null, time: 'now', prog: null, temp: null });
     add(section, 'Alaphelyzet', ['Nyomd meg a `SET`-et, hogy alaphelyzetben legyél.'], [{ key: 'SET', how: 'tap' }]);
   };
 
   add('Előkészület', 'A gombok', [
     'A nagy `+` / `−` mindig a **villogó** értéket állítja.',
-    `Ha ${fixed ? '10' : '15'} mp-ig nem nyomsz semmit, a termosztát magától ment és kilép. Nyugodtan, de folyamatosan haladj.`,
+    `Ha ${fixed ? '10' : '15'} mp-ig (${fixed ? 'másoláskor 15' : 'programozáskor 1 percig'}) nem nyomsz semmit, a termosztát magától ment és kilép. Ha sokáig olvasol, szólok, mikor nyomd meg a \`LIGHT\`-ot, hogy ne lépjen ki.`,
     `A \`LIGHT\` ${fixed ? '10' : '15'} mp-re bekapcsolja a világítást.`,
   ], [{ key: 'LIGHT', how: 'tap' }]);
 
   if (opts.setClock) {
     home('Pontos idő');
+    menu = v.timeouts.set;
     Object.assign(lcd, { days: ['MON'], daysBlink: true, time: '12:00' });
     add('Pontos idő', 'Nap', ['Nyomd meg a `DAY`-t, majd `+` / `−`: **{nap}**.'],
       [{ key: 'DAY', how: 'tap' }, { key: 'PLUS', how: 'repeat', delay: 0.9 }], { live: 'day' });
@@ -298,6 +302,7 @@ export function buildPlan(state, opts = {}) {
   if (v.hasMode && (mode === 'cool' || opts.checkMode)) {
     const label = mode === 'cool' ? 'COOL' : 'HEAT';
     home('Üzemmód');
+    menu = v.timeouts.set;
     Object.assign(lcd, { label, timeBlink: true });
     add('Üzemmód', mode === 'cool' ? 'Hűtés mód' : 'Fűtés mód', [
       `Tartsd nyomva a \`SET\`-et, és közben nyomd meg a \`COPY\`-t. \`+\` / \`−\`: **${label}**.`,
@@ -313,6 +318,7 @@ export function buildPlan(state, opts = {}) {
       : groups.flatMap((g) => g.days.map((d) => ({ ...g, days: [d] })));
 
   const enter = (sec) => {
+    menu = v.timeouts.prog;
     Object.assign(lcd, { daysBlink: true, prog: null, temp: null, time: 'now', label: null });
     add(sec, 'Programozás indítása', ['Tartsd nyomva a `SET`-et, és közben nyomd meg a `PROG`-ot. Villogni kezd a nap.'],
       [{ key: 'SET', how: 'hold' }, { key: 'PROG', how: 'tap', delay: 0.8 }]);
@@ -373,18 +379,19 @@ export function buildPlan(state, opts = {}) {
     // régi típusok: napi pontosan 6 kapcsolás (P1–P6); napokként külön programozási menet
     toProgram.forEach((item) => {
       const sec = secOf(item);
-      home(sec);
-      enter(sec);
-      selectDay(sec, item);
+      menu = null;   // még nem vagyok menüben: nyugodtan el lehet olvasni
       const fillers = item.slots.filter((x) => x.filler).length;
       if (fillers) {
         add(sec, 'Mi jön most?', [
-          `A programodhoz ${6 - fillers} kapcsolás kell, de ${6} lépést mutatok: a maradék ${fillers} **kitöltés**.`,
+          `Mielőtt belépsz a programozásba, olvasd el: a programodhoz ${6 - fillers} kapcsolás kell, de ${6} lépést mutatok, a maradék ${fillers} **kitöltés**.`,
         ], [], {
           slotList: item.slots,
           info: `**Nem hiba:** ez a típus naponta mindig mind a 6 kapcsolást (P1–P6) használja, egyiket sem lehet kikapcsolni. Amit nem állítasz át, az a régi értékével működne tovább. A kitöltők ugyanazt a hőfokot ismétlik, ami akkor amúgy is érvényes, így semmin nem változtatnak. A gyári időpontjukon hagytam őket, hogy kevés gombnyomás kelljen.`,
         });
       }
+      home(sec);
+      enter(sec);
+      selectDay(sec, item);
       item.slots.forEach((s, i) => {
         const n = i + 1, f = v.factory[i];
         const isLast = n === 6;
@@ -417,6 +424,7 @@ export function buildPlan(state, opts = {}) {
     const src = item.days[0];
     const sec = `Másolás: ${DAY_HU[src]} → ${item.copyTo.map((d) => DAY_HU[d]).join(', ')}`;
     home(sec);
+    menu = v.timeouts.copy;
     Object.assign(lcd, { label: 'COPY', days: ['MON'], daysBlink: true, prog: null, temp: null });
     add(sec, 'Másolás indítása', [`Tartsd nyomva a \`COPY\`-t kb. **${v.copySeconds} mp-ig**, amíg megjelenik a \`COPY\` felirat.`],
       [{ key: 'COPY', how: 'long', seconds: v.copySeconds }]);

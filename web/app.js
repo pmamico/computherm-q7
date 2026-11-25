@@ -21,7 +21,7 @@ const md = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`
 function showView(name) {
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
   document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.view === name));
-  if (name !== 'guide') clearInterval(liveTimer);
+  if (name !== 'guide') { clearInterval(liveTimer); clearTimeout(idleTimer); hideIdle(); }
   window.scrollTo({ top: 0 });
 }
 document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => {
@@ -279,6 +279,48 @@ function summaryHtml() {
   return `<table class="summary">${rows}</table>`;
 }
 
+// ---- tétlenségi figyelmeztetés --------------------------------------------------
+// A termosztát a menüből kilép, ha egy ideig (típustól függően 10/15/60 mp) nem nyomnak gombot.
+// Azt nem látom, mikor nyomsz a készüléken, ezért az útmutatóban eltöltött időt figyelem, és 3 mp-cel előtte szólok.
+let idleTimer = null;
+let beepOn = localStorage.getItem('q7-beep') !== '0';
+const syncBeep = () => { $('#beep').textContent = beepOn ? '🔔' : '🔕'; $('#beep').title = beepOn ? 'Hangjelzés bekapcsolva (kikapcsolás)' : 'Hangjelzés kikapcsolva (bekapcsolás)'; };
+$('#beep').addEventListener('click', () => { beepOn = !beepOn; localStorage.setItem('q7-beep', beepOn ? '1' : '0'); syncBeep(); });
+syncBeep();
+
+let audio = null;
+function beep() {
+  if (!beepOn) return;
+  try {
+    audio ||= new AudioContext();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.frequency.value = 880; o.connect(g); g.connect(audio.destination);
+    g.gain.setValueAtTime(0.15, audio.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.35);
+    o.start(); o.stop(audio.currentTime + 0.35);
+  } catch { /* nincs hang */ }
+  navigator.vibrate?.(200);
+}
+
+function hideIdle() {
+  $('#idle').hidden = true;
+  $('#btn-LIGHT')?.classList.remove('nudge');
+}
+function armIdle() {
+  clearTimeout(idleTimer);
+  hideIdle();
+  const step = plan?.steps[stepIdx];
+  if (!step?.timeout || !$('#view-guide').classList.contains('active')) return;
+  const warn = Math.max(4, step.timeout - 3);
+  idleTimer = setTimeout(() => {
+    const left = step.timeout - warn;
+    $('#idle').innerHTML = `<span>⏱ <b>${warn} mp</b> telt el. Ha azóta nem nyomtál semmit a termosztáton, nyomd meg a <kbd>LIGHT</kbd>-ot, különben ${left} mp múlva kilép.</span><button id="idle-ok" class="primary" type="button">Megnyomtam</button>`;
+    $('#idle').hidden = false;
+    $('#btn-LIGHT')?.classList.add('nudge');
+    $('#idle-ok').addEventListener('click', armIdle);
+    beep();
+  }, warn * 1000);
+}
+
 function slotListHtml(slots) {
   return `<table class="summary slots">${slots.map((x, i) => `<tr class="${x.filler ? 'filler' : ''}"><th>P${i + 1}</th><td>${fmtTime(x.time)}</td><td><b>${fmtTemp(x.temp)} °C</b></td><td>${x.filler ? 'kitöltés' : 'a programod része'}</td></tr>`).join('')}</table>`;
 }
@@ -316,6 +358,7 @@ function renderStep() {
   $('#progress-bar').style.width = `${((stepIdx + 1) / plan.steps.length) * 100}%`;
   document.querySelectorAll('#step-list li').forEach((li, i) => { li.classList.toggle('current', i === stepIdx); li.classList.toggle('done', i < stepIdx); });
   draw();
+  armIdle();
   if (s.live || plan.steps[stepIdx].lcd.time === 'now') liveTimer = setInterval(draw, 5000);
 }
 
