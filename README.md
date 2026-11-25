@@ -3,6 +3,8 @@
 Van egy **Computherm Q7** szobatermosztátod, és nem tudod, hogyan kell beprogramozni? Add meg, mikor hány fok
 legyen, és az app végigvezet a beállításon a termosztát animált előlapján.
 
+**Kipróbálható:** <https://pmamico.github.io/computherm-q7/> (AI nélkül)
+
 ![Beállítás lépésről lépésre](docs/kepernyo-beallitas.png)
 
 ## Mit tud
@@ -47,6 +49,12 @@ Csak Python 3.10+ kell, más függőség nincs:
 python3 server.py            # http://127.0.0.1:8778
 python3 server.py --host 0.0.0.0 --port 8080   # a helyi hálózatról is elérhető
 ```
+
+### Statikus tárhelyen
+
+AI nélkül a `web/` mappa magában is működik, bármilyen statikus tárhelyre feltehető (GitHub Pages, Netlify,
+Cloudflare Pages). Ez a repó a [`.github/workflows/pages.yml`](.github/workflows/pages.yml) workflow-val
+minden push után GitHub Pagesre teszi ki.
 
 ### AI-értelmezés bekapcsolása (opcionális)
 
