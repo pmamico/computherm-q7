@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Computherm Q7 programozó</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌡️</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>🌡️ Computherm Q7 programozó</h1>
+  <p>Add meg, mikor hány fok legyen, és megmutatjuk, mit nyomj meg a termosztáton.</p>
+  <nav>
+    <button class="tab active" data-view="plan">1. Program</button>
+    <button class="tab" data-view="guide">2. Beállítás</button>
+    <button class="tab" data-view="info">Puska</button>
+  </nav>
+</header>
+
+<main>
+  <section id="view-plan" class="view active">
+    <div class="card ai" id="ai-card" hidden>
+      <h2>✍️ Írd le saját szavaiddal</h2>
+      <textarea id="ai-text" rows="3" maxlength="2000" placeholder="Pl.: Hétköznap 6–8 és 16–22 között 21,5 fok, egyébként 18. Hétvégén 8-tól 23-ig 22 fok."></textarea>
+      <div class="row">
+        <button id="ai-go" class="primary">Értelmezd</button>
+        <span id="ai-msg" class="muted"></span>
+      </div>
+      <p id="ai-notes" class="notes" hidden></p>
+    </div>
+
+    <div class="card">
+      <div class="row spread">
+        <h2>🗓️ Heti program</h2>
+        <label>Minta:
+          <select id="preset"><option value="">–</option></select>
+        </label>
+      </div>
+      <div class="row">
+        <label><input type="radio" name="mode" value="heat" checked> ♨ Fűtés</label>
+        <label><input type="radio" name="mode" value="cool"> ❄ Hűtés</label>
+      </div>
+      <p class="muted">Az <b>alaphőfok</b> akkor érvényes, amikor nincs külön idősáv. Éjfélen átnyúló sávot (pl. 22:00–06:00) is megadhatsz.</p>
+      <div id="profiles"></div>
+      <button id="add-profile">+ Napcsoport</button>
+    </div>
+
+    <div class="card">
+      <h2>👀 Előnézet</h2>
+      <div id="week"></div>
+      <ul id="issues"></ul>
+      <div class="row options">
+        <label><input type="checkbox" id="opt-clock" checked> pontos idő is</label>
+        <label><input type="checkbox" id="opt-copy" checked> azonos napok másolással</label>
+        <label><input type="checkbox" id="opt-mode"> fűtés/hűtés mód ellenőrzése</label>
+      </div>
+      <button id="go-guide" class="primary big">Mutasd, mit nyomjak →</button>
+    </div>
+  </section>
+
+  <section id="view-guide" class="view">
+    <div class="guide">
+      <div class="device" id="device"></div>
+      <div class="card step">
+        <div class="row spread"><span class="chip" id="step-section"></span><span class="muted" id="step-count"></span></div>
+        <h2 id="step-title"></h2>
+        <div id="step-keys" class="keys"></div>
+        <div id="step-body"></div>
+        <p id="step-hint" class="hint" hidden></p>
+        <div id="step-summary" hidden></div>
+        <div class="row spread nav">
+          <button id="prev">←</button>
+          <button id="next" class="primary">Tovább →</button>
+        </div>
+        <div class="progress"><div id="progress-bar"></div></div>
+      </div>
+    </div>
+    <details class="card">
+      <summary>Összes lépés</summary>
+      <ol id="step-list"></ol>
+    </details>
+  </section>
+
+  <section id="view-info" class="view">
+    <div class="card">
+      <h2>🖐️ Ideiglenes eltérés a programtól</h2>
+      <table class="cheat">
+        <tr><td>A következő kapcsolásig</td><td><kbd>+</kbd>/<kbd>−</kbd> (első nyomásra 22 °C / 18 °C)</td></tr>
+        <tr><td>Party (1–99 óra)</td><td><kbd>+</kbd>/<kbd>−</kbd>, <kbd>DAY</kbd>, <kbd>+</kbd>/<kbd>−</kbd> óraszám</td></tr>
+        <tr><td>Szabadság (1–99 nap)</td><td><kbd>+</kbd>/<kbd>−</kbd>, <kbd>HOLD</kbd> 2 mp, <kbd>+</kbd>/<kbd>−</kbd> napszám</td></tr>
+        <tr><td>Tartósan</td><td><kbd>+</kbd>/<kbd>−</kbd>, <kbd>HOLD</kbd> röviden</td></tr>
+        <tr><td>Vissza a programhoz</td><td><kbd>SET</kbd></td></tr>
+      </table>
+      <h2>⚙️ Egyebek</h2>
+      <table class="cheat">
+        <tr><td>Program átnézése</td><td><kbd>PROG</kbd> többször, napváltás <kbd>+</kbd>/<kbd>−</kbd>, vége <kbd>SET</kbd></td></tr>
+        <tr><td>Pontos idő</td><td><kbd>DAY</kbd> nap → <kbd>DAY</kbd> óra → <kbd>DAY</kbd> perc → <kbd>SET</kbd></td></tr>
+        <tr><td>Fűtés ↔ hűtés</td><td><kbd>SET</kbd> nyomva + <kbd>COPY</kbd>, <kbd>+</kbd>/<kbd>−</kbd>, <kbd>SET</kbd></td></tr>
+        <tr><td>Komfort/takarék gyorsérték</td><td><kbd>SET</kbd> nyomva + <kbd>+</kbd> (vagy <kbd>−</kbd>), <kbd>+</kbd>/<kbd>−</kbd>, <kbd>SET</kbd></td></tr>
+        <tr><td>Gombzár be/ki</td><td><kbd>+</kbd> és <kbd>−</kbd> együtt 5 mp</td></tr>
+        <tr><td>Hőmérő kalibrálása</td><td><kbd>DAY</kbd>, <kbd>HOLD</kbd>, <kbd>+</kbd>/<kbd>−</kbd> (±3 °C), <kbd>SET</kbd></td></tr>
+        <tr><td>Világítás</td><td><kbd>LIGHT</kbd> (5 mp: minden gombnyomásra világít)</td></tr>
+        <tr><td>Gyári alaphelyzet</td><td>belső <kbd>RESET</kbd> gomb – az órát és a programot is törli</td></tr>
+      </table>
+      <p class="muted">A gombsorozatok a gyártó <a href="https://files.szerelvenybolt.hu/pdf_2019/Computherm/Computherm_Q7_hasznalati_utasitas.pdf" target="_blank" rel="noopener">kezelési útmutatóján</a> alapulnak. A kis gombok helye az ábrán csak jelzésszerű.</p>
+    </div>
+  </section>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+:root {
+  --bg: #f4f1ec; --card: #fff; --ink: #2b2b2b; --muted: #777; --accent: #e8590c; --accent2: #1c7ed6;
+  --ok: #2f9e44; --warn: #f08c00; --bad: #e03131; --radius: 14px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink); background: var(--bg);
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+header { padding: 18px 20px 0; max-width: 1150px; margin: 0 auto; }
+header h1 { margin: 0; font-size: 1.6rem; }
+header p { margin: 4px 0 12px; color: var(--muted); }
+nav { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab { border: 0; background: transparent; padding: 10px 14px; border-radius: 10px 10px 0 0; font-size: 1rem; cursor: pointer; color: var(--muted); }
+.tab.active { background: var(--card); color: var(--ink); font-weight: 600; }
+main { max-width: 1150px; margin: 0 auto; padding: 0 20px 40px; }
+.view { display: none; }
+.view.active { display: block; }
+.card { background: var(--card); border-radius: var(--radius); padding: 16px 20px; margin: 0 0 16px; box-shadow: 0 1px 3px #0001; }
+.view > .card:first-child, .guide { border-top-left-radius: 0; }
+h2 { font-size: 1.15rem; margin: 0 0 10px; }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+.row.spread { justify-content: space-between; }
+.row-wrap { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+.muted { color: var(--muted); font-size: .9rem; }
+button { font: inherit; padding: 8px 14px; border-radius: 10px; border: 1px solid #ccc; background: #fafafa; cursor: pointer; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+button.big { font-size: 1.1rem; padding: 12px 20px; }
+button.link { border: 0; background: none; color: var(--accent2); padding: 4px 6px; }
+button.link.danger { color: var(--bad); }
+textarea { width: 100%; font: inherit; padding: 10px; border-radius: 10px; border: 1px solid #ccc; resize: vertical; }
+input[type=number], input.time, select { font: inherit; padding: 5px 6px; border-radius: 8px; border: 1px solid #ccc; }
+input.temp { width: 5em; }
+input.time { width: 4.6em; text-align: center; }
+.ai { background: linear-gradient(135deg, #fff, #fff4e6); }
+.notes { background: #fff9db; padding: 8px 12px; border-radius: 10px; margin: 8px 0 0; }
+
+.profile { border: 1px solid #eee; border-radius: 12px; padding: 10px 12px; margin: 10px 0; background: #fcfcfc; }
+.days { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+.day { min-width: 2.6em; padding: 6px 8px; border-radius: 8px; }
+.day.on { background: var(--accent2); border-color: var(--accent2); color: #fff; font-weight: 600; }
+.period { display: flex; gap: 6px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+
+.week-row { display: grid; grid-template-columns: 2.6em 1fr 3.2em; gap: 8px; align-items: center; margin: 4px 0; }
+.week-row > span:first-child { font-weight: 600; }
+.bar { position: relative; display: flex; height: 28px; border-radius: 7px; overflow: hidden; background: #eee; }
+.bar.empty { align-items: center; padding-left: 10px; color: var(--muted); font-size: .85rem; }
+.axis .bar { height: 16px; background: none; overflow: visible; }
+.axis .bar span { position: absolute; font-size: .75rem; color: var(--muted); transform: translateX(-50%); }
+.seg { display: flex; align-items: center; justify-content: center; font-size: .78rem; font-weight: 600; color: #222c; border-right: 1px solid #fff8; }
+.badge { font-size: .8rem; color: var(--muted); text-align: right; }
+.badge.bad { color: var(--bad); font-weight: 700; }
+#issues { padding-left: 18px; }
+#issues li.error { color: var(--bad); }
+#issues li.warn { color: var(--warn); }
+#issues li.info { color: var(--muted); font-size: .9rem; }
+.options { margin: 14px 0; }
+
+/* útmutató */
+.guide { display: grid; grid-template-columns: minmax(300px, 1.15fr) 1fr; gap: 16px; align-items: start; }
+@media (max-width: 860px) { .guide { grid-template-columns: 1fr; } }
+.device { position: sticky; top: 8px; background: var(--card); border-radius: var(--radius); padding: 12px; box-shadow: 0 1px 3px #0001; }
+.step { margin: 0; min-height: 100%; }
+.step h2 { font-size: 1.35rem; margin: 6px 0 10px; }
+.chip { background: #e7f5ff; color: var(--accent2); padding: 3px 10px; border-radius: 99px; font-size: .85rem; font-weight: 600; }
+#step-body p { line-height: 1.5; margin: 8px 0; }
+.hint { background: #f1f3f5; padding: 8px 12px; border-radius: 10px; font-size: .92rem; }
+.keys { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 4px 0 8px; }
+.keychip { display: inline-flex; flex-direction: column; align-items: center; }
+.keychip small { color: var(--muted); font-size: .72rem; }
+.then { color: var(--muted); font-weight: 700; }
+kbd { display: inline-block; min-width: 1.6em; text-align: center; padding: 1px 7px; border-radius: 6px; border: 1px solid #bbb;
+  border-bottom-width: 3px; background: #f8f9fa; font: 600 .9em/1.4 ui-monospace, monospace; }
+.keys kbd { font-size: 1.05rem; padding: 3px 10px; background: #fff4e6; border-color: var(--accent); }
+.nav { margin-top: 18px; }
+.progress { height: 6px; background: #eee; border-radius: 3px; margin-top: 14px; overflow: hidden; }
+#progress-bar { height: 100%; background: var(--accent); transition: width .3s; }
+#step-list li { cursor: pointer; padding: 2px 0; }
+#step-list li.done { opacity: .55; }
+#step-list li.current { font-weight: 700; color: var(--accent); }
+table.summary { border-collapse: collapse; font-size: .85rem; margin-top: 8px; }
+table.summary th, table.summary td { border: 1px solid #e3e3e3; padding: 4px 6px; text-align: center; }
+table.cheat { border-collapse: collapse; width: 100%; }
+table.cheat th, table.cheat td { text-align: left; border-bottom: 1px solid #eee; padding: 7px 6px; vertical-align: top; }
+.photo { max-width: 320px; width: 100%; border-radius: 10px; }
+
+/* termosztát SVG */
+svg.q7 { width: 100%; height: auto; display: block; }
+.q7 text { font-family: system-ui, sans-serif; }
+.lcd text { fill: #1f2420; }
+.lcd-day { font-size: 11px; font-weight: 700; }
+.lcd-day.off { opacity: .08; }
+.lcd-small { font-size: 9px; font-weight: 700; letter-spacing: .5px; }
+.lcd-big { font: 700 32px ui-monospace, "DejaVu Sans Mono", monospace; }
+.lcd-mid { font: 700 22px ui-monospace, "DejaVu Sans Mono", monospace; }
+.lcd-huge { font: 700 50px ui-monospace, "DejaVu Sans Mono", monospace; }
+.lcd-icon { font-size: 22px; }
+.blink { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.brand { font: italic 900 17px system-ui, sans-serif; fill: #333; }
+.brand-sub { font-size: 10px; fill: #666; }
+.strip-label { font-size: 10px; fill: #888; }
+.btn .cap { fill: url(#key); stroke: #a0a0a0; }
+.btn text { text-anchor: middle; fill: #555; font-weight: 700; pointer-events: none; }
+.btn.big text { font-size: 34px; fill: #fff; }
+.btn.small text { font-size: 12px; }
+.btn.small .cap { fill: #f4f4f4; }
+.btn .ring { fill: none; stroke: var(--accent); stroke-width: 4; opacity: 0; }
+.btn.active .ring { opacity: .9; animation: glow 1.3s ease-in-out infinite; }
+@keyframes glow { 50% { opacity: .35; } }
+.btn.active .cap { animation-duration: 2.8s; animation-iteration-count: infinite; animation-delay: var(--d, 0s); animation-fill-mode: both; }
+.btn.tap .cap { animation-name: tap; }
+.btn.repeat .cap { animation-name: repeat; }
+.btn.hold .cap { animation-name: hold; }
+.btn.long .cap { animation-name: long; }
+.btn.active.hold .ring, .btn.active.long .ring { stroke-dasharray: 6 4; }
+@keyframes tap { 0%, 3% { fill: #ffe8cc; } 5%, 16% { fill: #ff922b; stroke: #d9480f; } 19%, 100% { fill: #ffe8cc; } }
+@keyframes repeat {
+  0%, 100% { fill: #ffe8cc; }
+  5%, 10% { fill: #ff922b; } 15% { fill: #ffe8cc; } 20%, 25% { fill: #ff922b; } 30% { fill: #ffe8cc; }
+  35%, 40% { fill: #ff922b; } 45% { fill: #ffe8cc; } 50%, 55% { fill: #ff922b; } 60% { fill: #ffe8cc; }
+}
+@keyframes hold { 0% { fill: #ffe8cc; } 3%, 70% { fill: #e8590c; stroke: #a61e4d; } 74%, 100% { fill: #ffe8cc; } }
+@keyframes long { 0% { fill: #ffe8cc; } 3% { fill: #ffc078; } 80% { fill: #d9480f; stroke: #a61e4d; } 84%, 100% { fill: #ffe8cc; } }

@@ -1,0 +1,10 @@
+services:
+  q7:
+    build: .
+    ports:
+      - "8778:8778"
+    # opcionális: ANTHROPIC_API_KEY=... egy .env fájlban bekapcsolja az AI-értelmezést
+    env_file:
+      - path: .env
+        required: false
+    restart: unless-stopped
