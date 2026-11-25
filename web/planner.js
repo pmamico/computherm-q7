@@ -84,6 +84,16 @@ export const progLabel = (v, n) => (v.prog === 'PROG' ? `PROG ${n}` : `P${n}`);
  * az éjfélen átnyúló sáv (pl. 22:00–06:00) a nap elejére és végére is kerül.
  */
 export function daySwitches(profile, issues = [], v = VARIANTS[DEFAULT_VARIANT]) {
+  const cells = dayCells(profile, issues, v);
+  const switches = [{ time: 0, temp: cells[0] }];
+  for (let i = 1; i < SLOTS; i++) if (cells[i] !== cells[i - 1]) switches.push({ time: i * STEP_MIN, temp: cells[i] });
+  return switches;
+}
+
+export const SLOT_COUNT = SLOTS;
+
+/** Egy profil → 144 elemű tömb: minden 10 perces cella hőfoka. */
+export function dayCells(profile, issues = [], v = VARIANTS[DEFAULT_VARIANT]) {
   const base = roundTemp(profile.base_temp ?? profile.base, v);
   const cells = new Array(SLOTS).fill(base ?? 20);
   if (base === null) issues.push({ level: 'error', text: 'Hiányzik az alaphőfok.' });
@@ -103,9 +113,34 @@ export function daySwitches(profile, issues = [], v = VARIANTS[DEFAULT_VARIANT])
     const len = (b - a + SLOTS) % SLOTS || SLOTS;
     for (let k = 0; k < len; k++) cells[(a + k) % SLOTS] = temp;
   }
-  const switches = [{ time: 0, temp: cells[0] }];
-  for (let i = 1; i < SLOTS; i++) if (cells[i] !== cells[i - 1]) switches.push({ time: i * STEP_MIN, temp: cells[i] });
-  return switches;
+  return cells;
+}
+
+/** Cellák → { base_temp, periods }: az alaphőfok a leggyakoribb érték, a többi összefüggő szakasz idősáv lesz. */
+export function cellsToProfile(cells) {
+  const count = new Map();
+  cells.forEach((t) => count.set(t, (count.get(t) || 0) + 1));
+  const base = [...count.entries()].sort((x, y) => y[1] - x[1] || x[0] - y[0])[0][0];
+  const periods = [];
+  for (let i = 0; i < cells.length;) {
+    let j = i;
+    while (j < cells.length && cells[j] === cells[i]) j++;
+    if (cells[i] !== base) periods.push({ from: fmtTime(i * STEP_MIN), to: fmtTime(j * STEP_MIN), temp: cells[i] });
+    i = j;
+  }
+  return { base_temp: base, periods };
+}
+
+/** Összefüggő azonos hőfokú szakaszok: [{ a, b, temp }] cellaindexekkel (b kizáró). */
+export function runsOf(cells) {
+  const runs = [];
+  for (let i = 0; i < cells.length;) {
+    let j = i;
+    while (j < cells.length && cells[j] === cells[i]) j++;
+    runs.push({ a: i, b: j, temp: cells[i] });
+    i = j;
+  }
+  return runs;
 }
 
 /**

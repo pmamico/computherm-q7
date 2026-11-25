@@ -19,7 +19,8 @@ legyen, és az app végigvezet a beállításon a termosztát animált előlapj�
   | Q7 – régi | HOLD, DAY, LIGHT, RESET, COPY, PROG, SET |
   | Q7 RF – rádiós (régi) | HOLD, DAY, LIGHT, TEST, COPY, PROG, SET |
 
-- **Heti program szerkesztése**: napcsoportok (pl. hétköznap / hétvége), alaphőfok és idősávok, heti előnézet.
+- **Heti program rajzolással**: napcsoportonként (pl. hétköznap / hétvége) egy grafikonon húzod be, mikor hány fok
+  legyen: vízszintes húzás = idősáv, függőleges = hőfok, koppintás = percre pontos finomhangolás. Mobilon is megy.
   Figyelmeztet, ha egy napra több kapcsolás jutna, mint amennyit a Q7 tud (naponta 6).
 - **Lépésről lépésre útmutató**: a kijelzőn villog, amit éppen állítasz, a megnyomandó gomb ki van emelve.
   Benne van a pontos idő beállítása, a programozás, az azonos napok másolása (`COPY`) és az ellenőrzés is.
@@ -83,6 +84,7 @@ napokat egyszer programoztatja be, a többire `COPY`-val másol. Ha mind a 7 nap
 |---|---|
 | `web/planner.js` | programozási modell és lépésgenerátor (böngészőben és node-ban is fut) |
 | `web/thermostat.js` | a termosztát előlapjának animálható SVG-je |
+| `web/dayeditor.js` | a húzható napi hőfok-szerkesztő |
 | `web/app.js`, `index.html`, `style.css` | a felület |
 | `server.py` | stdlib HTTP-szerver, opcionális `/api/parse` AI-végpont |
 

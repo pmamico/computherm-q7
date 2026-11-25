@@ -122,3 +122,15 @@ test('minden változat minden mintára ad lépéseket', () => {
       assert.ok(plan.ok && plan.steps.length > 5, `${variant} ${p.name}`);
     }
 });
+
+import { dayCells, cellsToProfile, runsOf } from '../web/planner.js';
+
+test('cellák ↔ profil oda-vissza', () => {
+  for (const p of Object.values(PRESETS)) for (const prof of p.state.profiles) {
+    const cells = dayCells(prof);
+    assert.deepEqual(dayCells(cellsToProfile(cells)), cells);
+  }
+  const back = cellsToProfile(dayCells({ base_temp: 19, periods: [{ from: '20:00', to: '24:00', temp: 21 }] }));
+  assert.deepEqual(back, { base_temp: 19, periods: [{ from: '20:00', to: '24:00', temp: 21 }] });
+  assert.equal(runsOf(dayCells({ base_temp: 19, periods: [{ from: '06:00', to: '08:00', temp: 21 }] })).length, 3);
+});

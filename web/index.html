@@ -39,15 +39,16 @@
     <div class="card">
       <div class="row spread">
         <h2>🗓️ Heti program</h2>
-        <label>Minta:
-          <select id="preset"><option value="">–</option></select>
-        </label>
+        <div class="row tight">
+          <button id="undo" class="link" disabled title="Visszavonás">↶ vissza</button>
+          <select id="preset" aria-label="Minta"><option value="">Minta…</option></select>
+        </div>
       </div>
       <div class="row" id="mode-row">
         <label><input type="radio" name="mode" value="heat" checked> ♨ Fűtés</label>
         <label><input type="radio" name="mode" value="cool"> ❄ Hűtés</label>
       </div>
-      <p class="muted">Az <b>alaphőfok</b> akkor érvényes, amikor nincs külön idősáv. Éjfélen átnyúló sávot (pl. 22:00–06:00) is megadhatsz.</p>
+      <p class="muted howto">👉 <b>Húzd vízszintesen</b> az ujjad vagy az egeret: a húzott idősáv olyan meleg lesz, amilyen magasan húzod. Egy sávot <b>fel-le húzva</b> a hőfokát állítod, <b>koppintással</b> percre pontosan finomhangolod.</p>
       <div id="profiles"></div>
       <button id="add-profile">+ Napcsoport</button>
     </div>

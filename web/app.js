@@ -1,5 +1,6 @@
-import { DAYS, DAY_HU, DAY_SHORT, PRESETS, VARIANTS, DEFAULT_VARIANT, variantOf, dayLabel, progLabel, compile, buildPlan, fmtTime, fmtTemp, parseTime } from './planner.js';
+import { DAYS, DAY_HU, DAY_SHORT, PRESETS, VARIANTS, dayCells, cellsToProfile, DEFAULT_VARIANT, variantOf, dayLabel, progLabel, compile, buildPlan, fmtTime, fmtTemp, parseTime } from './planner.js';
 import { thermostatSvg, showStep, keyLabel } from './thermostat.js';
+import { mountDayEditor, tempColor } from './dayeditor.js';
 
 const $ = (s) => document.querySelector(s);
 const STORE = 'q7-state-v1';
@@ -14,12 +15,6 @@ function save() { localStorage.setItem(STORE, JSON.stringify(state)); }
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const md = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<kbd>$1</kbd>');
 
-function tempColor(t) {
-  // hideg: kék, langyos: halvány, meleg: narancs (RGB-keverés, hogy ne menjen át zöldbe)
-  const x = Math.min(1, Math.max(0, (t - 16) / 7));
-  const mix = (a, b) => Math.round(a + (b - a) * x);
-  return `rgb(${mix(116, 255)}, ${mix(192, 146)}, ${mix(252, 43)})`;
-}
 
 // ---- nézetek ------------------------------------------------------------
 function showView(name) {
@@ -37,26 +32,18 @@ document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () 
 function renderProfiles() {
   const box = $('#profiles');
   box.innerHTML = '';
+  const v = variantOf(state);
   state.profiles.forEach((p, pi) => {
     const card = document.createElement('div');
     card.className = 'profile';
     card.innerHTML = `
       <div class="row spread">
-        <div class="days">${DAYS.map((d) => `<button class="day ${p.days.includes(d) ? 'on' : ''}" data-day="${d}" title="${DAY_HU[d]}">${DAY_SHORT[d]}</button>`).join('')}
-          <button class="link" data-act="wd">hétköznap</button><button class="link" data-act="we">hétvége</button><button class="link" data-act="all">mind</button></div>
-        ${state.profiles.length > 1 ? '<button class="link danger" data-act="del">törlés</button>' : ''}
+        <div class="days">${DAYS.map((d) => `<button class="day ${p.days.includes(d) ? 'on' : ''}" data-day="${d}" title="${DAY_HU[d]}">${DAY_SHORT[d]}</button>`).join('')}</div>
+        <div class="day-quick"><button class="link" data-act="wd">hétköznap</button><button class="link" data-act="we">hétvége</button><button class="link" data-act="all">mind</button>
+        ${state.profiles.length > 1 ? '<button class="link danger" data-act="del">törlés</button>' : ''}</div>
       </div>
-      <div class="row"><label>Alaphőfok: <input type="number" class="temp" step="0.5" min="5" max="40" value="${p.base_temp}" data-f="base"> °C</label>
-        </div>
-      <div class="periods">${p.periods.map((x, i) => `
-        <div class="period" data-i="${i}">
-          <input class="time" inputmode="numeric" placeholder="06:00" value="${esc(x.from)}" data-f="from"> –
-          <input class="time" inputmode="numeric" placeholder="22:00" value="${esc(x.to)}" data-f="to">
-          <input type="number" class="temp" step="0.5" min="5" max="40" value="${x.temp}" data-f="temp"> °C
-          <button class="link danger" data-act="delp" title="sáv törlése">✕</button>
-        </div>`).join('')}</div>
-      <button class="link" data-act="addp">+ idősáv</button>`;
-    card.addEventListener('click', (e) => {
+      <div class="ed"></div>`;
+    card.querySelector('.row').addEventListener('click', (e) => {
       const b = e.target.closest('button');
       if (!b) return;
       if (b.dataset.day) return setDays(pi, [b.dataset.day], !p.days.includes(b.dataset.day));
@@ -65,25 +52,12 @@ function renderProfiles() {
       if (act === 'we') setDays(pi, DAYS.slice(5), true);
       if (act === 'all') setDays(pi, DAYS, true);
       if (act === 'del') { state.profiles.splice(pi, 1); changed(true); }
-      if (act === 'addp') {
-        const last = p.periods.at(-1);
-        p.periods.push(last ? { from: last.to, to: '22:00', temp: 21.5 } : { from: '06:00', to: '22:00', temp: 21.5 });
-        changed(true);
-      }
-      if (act === 'delp') { p.periods.splice(Number(b.closest('.period').dataset.i), 1); changed(true); }
-    });
-    card.addEventListener('change', (e) => {
-      const f = e.target.dataset.f;
-      if (!f) return;
-      if (f === 'base') p.base_temp = Number(e.target.value);
-      else {
-        const per = p.periods[Number(e.target.closest('.period').dataset.i)];
-        if (f === 'temp') per[f] = Number(e.target.value);
-        else { const m = parseTime(e.target.value); per[f] = m === null ? e.target.value : fmtTime(m); e.target.value = per[f]; }
-      }
-      changed(false);
     });
     box.appendChild(card);
+    mountDayEditor(card.querySelector('.ed'), {
+      cells: dayCells(p, [], v), variant: v,
+      onChange: (cells) => { Object.assign(p, cellsToProfile(cells)); changed(false); },
+    });
   });
 }
 
@@ -98,7 +72,14 @@ function setDays(pi, days, on) {
   changed(true);
 }
 
+// visszavonás: minden módosítás előtti állapot
+const undo = [];
+let lastState = null;
 function changed(rerender) {
+  if (lastState !== null) undo.push(lastState);
+  if (undo.length > 100) undo.shift();
+  lastState = JSON.stringify(state);
+  $('#undo').disabled = !undo.length;
   save();
   if (rerender) renderProfiles();
   renderWeek();
@@ -114,7 +95,7 @@ function renderWeek() {
     const segs = sw.map((s, i) => {
       const end = i + 1 < sw.length ? sw[i + 1].time : 1440;
       const w = (end - s.time) / 1440 * 100;
-      return `<div class="seg" style="width:${w}%;background:${tempColor(s.temp)}" title="${fmtTime(s.time)}–${fmtTime(end % 1440)}: ${fmtTemp(s.temp)} °C">${w > 7 ? fmtTemp(s.temp) : ''}</div>`;
+      return `<div class="seg" style="width:${w}%;background:${tempColor(s.temp)}" title="${fmtTime(s.time)}–${fmtTime(end % 1440)}: ${fmtTemp(s.temp)} °C">${w > 9 ? fmtTemp(s.temp) : ''}</div>`;
     }).join('');
     const n = sw.length - 1;
     return `<div class="week-row"><span>${DAY_SHORT[d]}</span><div class="bar">${segs}</div><span class="badge ${n > 6 ? 'bad' : ''}">${n}/6</span></div>`;
@@ -137,6 +118,17 @@ $('#preset').addEventListener('change', (e) => {
   e.target.value = '';
   $('#ai-notes').hidden = true;
   changed(true);
+});
+
+$('#undo').addEventListener('click', () => {
+  if (!undo.length) return;
+  state = JSON.parse(undo.pop());
+  lastState = JSON.stringify(state);
+  $('#undo').disabled = !undo.length;
+  save();
+  renderVariant();
+  renderProfiles();
+  renderWeek();
 });
 
 // ---- AI ---------------------------------------------------------------------
@@ -187,7 +179,7 @@ $('#variants').addEventListener('change', (e) => {
   if (e.target.name !== 'variant') return;
   state.variant = e.target.value;
   renderVariant();
-  changed(false);
+  changed(true);   // a szerkesztők hőfoktartománya típusfüggő
 });
 
 function renderCheat(v) {
@@ -297,3 +289,4 @@ $('#opt-mode').checked = state.mode === 'cool';
 renderVariant();
 renderProfiles();
 renderWeek();
+lastState = JSON.stringify(state);
