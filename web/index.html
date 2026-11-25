@@ -72,17 +72,22 @@
     <div class="guide">
       <div class="device" id="device"></div>
       <div class="card step">
-        <div class="row spread"><span class="chip" id="step-section"></span><span class="muted" id="step-count"></span></div>
-        <h2 id="step-title"></h2>
-        <div id="step-keys" class="keys"></div>
-        <div id="step-body"></div>
-        <p id="step-hint" class="hint" hidden></p>
-        <div id="step-summary" hidden></div>
-        <div class="row spread nav">
-          <button id="prev">←</button>
-          <button id="next" class="primary">Tovább →</button>
+        <div class="step-content" id="step-content">
+          <div class="row spread"><span class="chip" id="step-section"></span><span class="muted" id="step-count"></span></div>
+          <h2 id="step-title"></h2>
+          <div id="step-keys" class="keys"></div>
+          <div id="step-body"></div>
+          <p id="step-hint" class="hint" hidden></p>
+          <div id="step-summary" hidden></div>
         </div>
-        <div class="progress"><div id="progress-bar"></div></div>
+        <div class="step-nav">
+          <div class="progress"><div id="progress-bar"></div></div>
+          <div class="row spread nav">
+            <button id="prev" title="Vissza (←)">←</button>
+            <span class="keytip">Enter / szóköz: tovább · ←: vissza</span>
+            <button id="next" class="primary" title="Tovább (Enter, szóköz, →)">Tovább →</button>
+          </div>
+        </div>
       </div>
     </div>
     <details class="card">

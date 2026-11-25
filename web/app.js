@@ -251,10 +251,12 @@ $('#prev').addEventListener('click', () => { if (stepIdx > 0) { stepIdx--; rende
 $('#next').addEventListener('click', () => {
   if (stepIdx < plan.steps.length - 1) { stepIdx++; renderStep(); } else showView('plan');
 });
+// billentyűk az útmutatóban: Enter, szóköz, → = tovább; ← = vissza
 document.addEventListener('keydown', (e) => {
-  if (!$('#view-guide').classList.contains('active') || e.target.matches('input, textarea, select')) return;
-  if (e.key === 'ArrowRight') $('#next').click();
-  if (e.key === 'ArrowLeft') $('#prev').click();
+  if (!$('#view-guide').classList.contains('active') || e.target.matches('input, textarea, select, summary')) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (['Enter', ' ', 'ArrowRight'].includes(e.key)) { e.preventDefault(); if (!e.repeat || e.key === 'ArrowRight') $('#next').click(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); $('#prev').click(); }
 });
 
 function liveValues() {
@@ -296,6 +298,7 @@ function renderStep() {
     $('#step-body').innerHTML = st.body.map((p) => `<p>${md(fill(p))}</p>`).join('');
     showStep($('#device'), st);
   };
+  $('#step-content').scrollTop = 0;
   $('#step-section').textContent = s.section;
   $('#step-count').textContent = `${stepIdx + 1} / ${plan.steps.length}`;
   $('#step-title').textContent = s.title;
@@ -306,7 +309,8 @@ function renderStep() {
   $('#step-summary').hidden = !s.summary && !s.slotList;
   $('#step-summary').innerHTML = s.summary ? summaryHtml() : s.slotList ? slotListHtml(s.slotList) : '';
   $('#prev').disabled = stepIdx === 0;
-  $('#next').textContent = stepIdx === plan.steps.length - 1 ? 'Vissza a programhoz' : 'Tovább →';
+  $('#next').textContent = stepIdx === plan.steps.length - 1 ? 'Kész ✓' : 'Tovább →';
+  $('#next').title = stepIdx === plan.steps.length - 1 ? 'Vissza a programhoz' : 'Tovább (Enter, szóköz, →)';
   $('#progress-bar').style.width = `${((stepIdx + 1) / plan.steps.length) * 100}%`;
   document.querySelectorAll('#step-list li').forEach((li, i) => { li.classList.toggle('current', i === stepIdx); li.classList.toggle('done', i < stepIdx); });
   draw();
