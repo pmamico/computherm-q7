@@ -17,25 +17,25 @@ const OLD_FACTORY = [[420, 20], [540, 17], [750, 20], [900, 19], [1050, 22], [13
 export const VARIANTS = {
   q7: {
     name: 'Q7 – újabb', short: 'Q7',
-    hint: 'A napok neve betűvel látszik (MON, TUE…), a kis gombok: SET, DAY, PROG, COPY, HOLD, LIGHT.',
+    hint: 'Napok betűvel (MON, TUE…), van PROG 0 (00:00).',
     logic: 'p0', dayLabels: 'names', prog: 'PROG', buttons: NEW_BUTTONS,
     minTemp: 5, maxTemp: 40, copySeconds: 3, hasMode: true, factoryTemp: 20,
   },
   q7num: {
     name: 'Q7 – „új szoftverrel”', short: 'Q7 (új szoftver)',
-    hint: 'A napok számmal látszanak (1–7), programozáskor van P0 (00:00), a kis gombok: SET, DAY, PROG, COPY, HOLD, LIGHT.',
+    hint: 'Napok számmal (1–7), van P0 (00:00).',
     logic: 'p0', dayLabels: 'numbers', prog: 'P', buttons: NEW_BUTTONS,
     minTemp: 5, maxTemp: 35, copySeconds: 3, hasMode: true, factoryTemp: 20,
   },
   q7old: {
     name: 'Q7 – régi', short: 'Q7 (régi)',
-    hint: 'Napok számmal (1–7), fixen 6 kapcsolás (P1–P6), a kis gombok között RESET is van: HOLD, DAY, LIGHT, RESET, COPY, PROG, SET.',
+    hint: 'Napok számmal (1–7), fixen 6 kapcsolás (P1–P6).',
     logic: 'fixed6', dayLabels: 'numbers', prog: 'P', buttons: ['HOLD', 'DAY', 'LIGHT', 'RESET', 'COPY', 'PROG', 'SET'],
     minTemp: 7, maxTemp: 35, copySeconds: 5, hasMode: false, factory: OLD_FACTORY,
   },
   q7rf: {
     name: 'Q7 RF – rádiós (régi)', short: 'Q7 RF',
-    hint: 'Vezeték nélküli, külön vevőegységgel. Napok számmal (1–7), fixen 6 kapcsolás, a kis gombok: HOLD, DAY, LIGHT, TEST, COPY, PROG, SET.',
+    hint: 'Vezeték nélküli, külön vevővel. Napok számmal (1–7), fixen 6 kapcsolás.',
     logic: 'fixed6', dayLabels: 'numbers', prog: 'P', buttons: ['HOLD', 'DAY', 'LIGHT', 'TEST', 'COPY', 'PROG', 'SET'],
     minTemp: 7, maxTemp: 35, copySeconds: 5, hasMode: false, factory: OLD_FACTORY, radio: true,
   },
