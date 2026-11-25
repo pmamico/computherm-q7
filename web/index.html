@@ -20,6 +20,12 @@
 
 <main>
   <section id="view-plan" class="view active">
+    <div class="card">
+      <h2>🔎 Melyik termosztátod van?</h2>
+      <p class="muted">Nézd meg a kis gombok feliratát a készüléken. A változatok másképp programozhatók.</p>
+      <div id="variants" class="variants"></div>
+    </div>
+
     <div class="card ai" id="ai-card" hidden>
       <h2>✍️ Írd le saját szavaiddal</h2>
       <textarea id="ai-text" rows="3" maxlength="2000" placeholder="Pl.: Hétköznap 6–8 és 16–22 között 21,5 fok, egyébként 18. Hétvégén 8-tól 23-ig 22 fok."></textarea>
@@ -37,7 +43,7 @@
           <select id="preset"><option value="">–</option></select>
         </label>
       </div>
-      <div class="row">
+      <div class="row" id="mode-row">
         <label><input type="radio" name="mode" value="heat" checked> ♨ Fűtés</label>
         <label><input type="radio" name="mode" value="cool"> ❄ Hűtés</label>
       </div>
@@ -84,26 +90,8 @@
 
   <section id="view-info" class="view">
     <div class="card">
-      <h2>🖐️ Ideiglenes eltérés a programtól</h2>
-      <table class="cheat">
-        <tr><td>A következő kapcsolásig</td><td><kbd>+</kbd>/<kbd>−</kbd> (első nyomásra 22 °C / 18 °C)</td></tr>
-        <tr><td>Party (1–99 óra)</td><td><kbd>+</kbd>/<kbd>−</kbd>, <kbd>DAY</kbd>, <kbd>+</kbd>/<kbd>−</kbd> óraszám</td></tr>
-        <tr><td>Szabadság (1–99 nap)</td><td><kbd>+</kbd>/<kbd>−</kbd>, <kbd>HOLD</kbd> 2 mp, <kbd>+</kbd>/<kbd>−</kbd> napszám</td></tr>
-        <tr><td>Tartósan</td><td><kbd>+</kbd>/<kbd>−</kbd>, <kbd>HOLD</kbd> röviden</td></tr>
-        <tr><td>Vissza a programhoz</td><td><kbd>SET</kbd></td></tr>
-      </table>
-      <h2>⚙️ Egyebek</h2>
-      <table class="cheat">
-        <tr><td>Program átnézése</td><td><kbd>PROG</kbd> többször, napváltás <kbd>+</kbd>/<kbd>−</kbd>, vége <kbd>SET</kbd></td></tr>
-        <tr><td>Pontos idő</td><td><kbd>DAY</kbd> nap → <kbd>DAY</kbd> óra → <kbd>DAY</kbd> perc → <kbd>SET</kbd></td></tr>
-        <tr><td>Fűtés ↔ hűtés</td><td><kbd>SET</kbd> nyomva + <kbd>COPY</kbd>, <kbd>+</kbd>/<kbd>−</kbd>, <kbd>SET</kbd></td></tr>
-        <tr><td>Komfort/takarék gyorsérték</td><td><kbd>SET</kbd> nyomva + <kbd>+</kbd> (vagy <kbd>−</kbd>), <kbd>+</kbd>/<kbd>−</kbd>, <kbd>SET</kbd></td></tr>
-        <tr><td>Gombzár be/ki</td><td><kbd>+</kbd> és <kbd>−</kbd> együtt 5 mp</td></tr>
-        <tr><td>Hőmérő kalibrálása</td><td><kbd>DAY</kbd>, <kbd>HOLD</kbd>, <kbd>+</kbd>/<kbd>−</kbd> (±3 °C), <kbd>SET</kbd></td></tr>
-        <tr><td>Világítás</td><td><kbd>LIGHT</kbd> (5 mp: minden gombnyomásra világít)</td></tr>
-        <tr><td>Gyári alaphelyzet</td><td>belső <kbd>RESET</kbd> gomb – az órát és a programot is törli</td></tr>
-      </table>
-      <p class="muted">A gombsorozatok a gyártó <a href="https://files.szerelvenybolt.hu/pdf_2019/Computherm/Computherm_Q7_hasznalati_utasitas.pdf" target="_blank" rel="noopener">kezelési útmutatóján</a> alapulnak. A kis gombok helye az ábrán csak jelzésszerű.</p>
+      <div id="cheat"></div>
+      <p class="muted">A gombsorozatok a gyártó <a href="https://files.szerelvenybolt.hu/pdf_2019/Computherm/Computherm_Q7_hasznalati_utasitas.pdf" target="_blank" rel="noopener">kezelési útmutatóin</a> alapulnak (újabb Q7, illetve a régi Q7 és Q7 RF füzetei). A kis gombok helye az ábrán csak jelzésszerű.</p>
     </div>
   </section>
 </main>

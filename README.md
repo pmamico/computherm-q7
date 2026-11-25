@@ -7,6 +7,16 @@ legyen, és az app gombnyomásról gombnyomásra végigvezet a beállításon a 
 
 ## Mit tud
 
+- **Típusválasztás**: a Q7-nek több változata van, és másképp programozhatók. Válaszd ki a tiédet a kis gombok
+  felirata alapján:
+
+  | Változat | Kis gombok |
+  |---|---|
+  | Q7 – újabb | SET, DAY, PROG, COPY, HOLD, LIGHT (napok: MON…SUN) |
+  | Q7 – „új szoftverrel” | SET, DAY, PROG, COPY, HOLD, LIGHT (napok: 1–7) |
+  | Q7 – régi | HOLD, DAY, LIGHT, RESET, COPY, PROG, SET |
+  | Q7 RF – rádiós (régi) | HOLD, DAY, LIGHT, TEST, COPY, PROG, SET |
+
 - **Heti program szerkesztése**: napcsoportok (pl. hétköznap / hétvége), alaphőfok és idősávok, heti előnézet.
   Figyelmeztet, ha egy napra több kapcsolás jutna, mint amennyit a Q7 tud (naponta 6).
 - **Lépésről lépésre útmutató**: a kijelzőn villog, amit éppen állítasz, a megnyomandó gomb ki van emelve.
@@ -50,14 +60,15 @@ A modell a `Q7_AI_MODEL` változóval cserélhető.
 
 ## Hogyan működik
 
-A termosztát szabályait a gyártó (Quantrax Kft.)
-[kezelési útmutatójából](https://files.szerelvenybolt.hu/pdf_2019/Computherm/Computherm_Q7_hasznalati_utasitas.pdf)
-modelleztem, összefoglalva a [`docs/q7-modell.md`](docs/q7-modell.md) fájlban:
+A szabályokat a gyártó (Quantrax Kft.) kezelési útmutatóiból modelleztem
+([újabb Q7](https://files.szerelvenybolt.hu/pdf_2019/Computherm/Computherm_Q7_hasznalati_utasitas.pdf), valamint a régi Q7 és Q7 RF füzetei),
+összefoglalva a [`docs/q7-modell.md`](docs/q7-modell.md) fájlban. Két logika van:
 
-- naponta egy rögzített kapcsolás van (`PROG 0`, 00:00) és 6 szabad (`PROG 1–6`);
-- az időpontok 10 percenként, a hőfok 5 és 40 °C között 0,5 fokonként állítható.
+- **újabb Q7**: naponta egy rögzített kapcsolás (`PROG 0`/`P0`, 00:00) és 6 szabad, kikapcsolható;
+- **régi Q7 és Q7 RF**: naponta pontosan 6 kapcsolás (P1–P6), a P6 hőfoka másnap P1-ig tart.
 
-Az app a napot 10 perces cellákra bontja, és a hőfokváltásokból képzi a kapcsolásokat. Az azonos programú
+Az időpontok 10 percenként, a hőfok 0,5 fokonként állítható. Az app a napot 10 perces cellákra bontja,
+a hőfokváltásokból képzi a kapcsolásokat, a régi típusoknál pedig ártalmatlan „töltelék” kapcsolásokkal egészít ki 6-ra. Az azonos programú
 napokat egyszer programoztatja be, a többire `COPY`-val másol. Ha mind a 7 nap egyforma, mindet egyszerre állítja.
 
 | Fájl | Mi van benne |

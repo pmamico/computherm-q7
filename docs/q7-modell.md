@@ -3,7 +3,7 @@
 Forrás: a gyártó (Quantrax Kft., 2018) magyar [kezelési útmutatója](https://files.szerelvenybolt.hu/pdf_2019/Computherm/Computherm_Q7_hasznalati_utasitas.pdf).
 Zárójelben az útmutató fejezetszáma. Ami nem az útmutatóból, hanem feltételezés, azt **[F]** jelöli.
 
-## Gombok
+## Gombok (újabb Q7)
 
 | Gomb | Hol | Mire |
 |---|---|---|
@@ -85,3 +85,31 @@ Teljesen új programhoz a `RESET` is használható (de az órát is törli).
 - A napválasztásnál a `+/−` körbejár a napokon és a „minden nap” állapoton; az app ezért nem nyomásszámot,
   hanem a célállapotot írja le („amíg csak a `TUE` villog”).
 - Időpontoknál nem ismert, hogy `--:--`-ról hova ugrik az első `+`; az app itt is a célértéket mutatja.
+
+## Típusváltozatok
+
+A fenti leírás az **újabb Q7**-re vonatkozik (2018-as útmutató). A régebbi füzetek alapján az app négy változatot ismer:
+
+| Változat | Kis gombok | Napok | Program | Hőfok | COPY |
+|---|---|---|---|---|---|
+| Q7 – újabb | SET DAY PROG COPY HOLD LIGHT | MON…SUN | PROG 0 (00:00) + 6 kikapcsolható | 5–40 °C | 3 mp |
+| Q7 – „új szoftverrel” | ugyanaz | 1–7 | P0 (00:00) + P1–P6 kikapcsolható | 5–35 °C | 3 mp |
+| Q7 – régi | HOLD DAY LIGHT RESET COPY PROG SET | 1–7 | **pontosan 6**: P1–P6, mindig aktív | 7–35 °C | 5 mp |
+| Q7 RF – rádiós (régi) | HOLD DAY LIGHT TEST COPY PROG SET | 1–7 | mint a régi Q7 | 7–35 °C | 5 mp |
+
+### Régi Q7 és Q7 RF (fix 6 kapcsolás)
+
+- Gyári program minden napra: P1 7:00 20 °C, P2 9:00 17 °C, P3 12:30 20 °C, P4 15:00 19 °C, P5 17:30 22 °C, P6 23:00 17 °C.
+- A P6 hőfoka másnap P1-ig érvényes, nincs külön éjféli kapcsolás.
+- Programozás: `SET` → `SET` nyomva + `PROG` → `+/−` nap (vagy mind a 7) → `PROG` → P1 időpont → `PROG` → P1 hőfok →
+  `PROG` → … → P6 hőfok → `SET`. (A P6 utáni `PROG` újra a P1-re ugrik, ellenőrzéshez.)
+- Másolás: `COPY` ~5 mp → `+/−` forrásnap → `COPY` → `+/−` célnap → `COPY` … → `SET`. 10 mp után magától nyugtáz.
+- Party: `+/−`, majd `DAY` annyiszor, ahány óra (1–9). Szabadság és tartós hőfok: mint az újabbnál.
+- Nincs fűtés/hűtés váltás, kalibrálás, gombzár (a hűtést a bekötés dönti el).
+- **Q7 RF**: `TEST` ~2 mp → 2 percig 5 mp-enként ki-be kapcsoló jel, a vevő piros LED-je követi (hatótáv-teszt).
+  Párosítás: vevőn `M/A` ~10 mp (zöld LED villog), majd a termosztáton `SET` + `DAY` együtt ~10 mp. Csak ha nem működik
+  a kapcsolat, mert új biztonsági kódot generál.
+
+**Hogyan lesz 6 kapcsolás** [F]: ha az előző nap ugyanazzal a hőfokkal ér véget, amivel a nap kezdődik, az éjféli pontot
+az app elhagyja (a P6 átnyúlik). A maradék helyeket „töltelék” kapcsolások egészítik ki (+10 percenként ugyanazzal a
+hőfokkal), így a hőfoklefutás nem változik. Az időpontokat növekvő sorrendben adja meg, mert a füzet erről nem szól.

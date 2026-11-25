@@ -1,10 +1,11 @@
-import { DAYS, DAY_HU, DAY_SHORT, PRESETS, compile, buildPlan, fmtTime, fmtTemp, parseTime } from './planner.js';
-import { thermostatSvg, showStep, KEY_LABEL } from './thermostat.js';
+import { DAYS, DAY_HU, DAY_SHORT, PRESETS, VARIANTS, DEFAULT_VARIANT, variantOf, dayLabel, progLabel, compile, buildPlan, fmtTime, fmtTemp, parseTime } from './planner.js';
+import { thermostatSvg, showStep, keyLabel } from './thermostat.js';
 
 const $ = (s) => document.querySelector(s);
 const STORE = 'q7-state-v1';
 
 let state = load() || structuredClone(PRESETS.hetkoznap.state);
+if (!VARIANTS[state.variant]) state.variant = DEFAULT_VARIANT;
 let plan = null, stepIdx = 0, liveTimer = null;
 
 function load() { try { return JSON.parse(localStorage.getItem(STORE)); } catch { return null; } }
@@ -132,7 +133,7 @@ $('#add-profile').addEventListener('click', () => {
 for (const [k, p] of Object.entries(PRESETS)) $('#preset').insertAdjacentHTML('beforeend', `<option value="${k}">${esc(p.name)}</option>`);
 $('#preset').addEventListener('change', (e) => {
   if (!e.target.value) return;
-  state = structuredClone(PRESETS[e.target.value].state);
+  state = { ...structuredClone(PRESETS[e.target.value].state), variant: state.variant };
   e.target.value = '';
   $('#ai-notes').hidden = true;
   changed(true);
@@ -155,7 +156,7 @@ $('#ai-go').addEventListener('click', async () => {
     // egységes "HH:MM" alak: "6" → "06:00"
     const hhmm = (t) => { const m = parseTime(t); return m === null ? t : fmtTime(m); };
     data.profiles.forEach((p) => p.periods.forEach((x) => { x.from = hhmm(x.from); x.to = hhmm(x.to); }));
-    state = { mode: data.mode, profiles: data.profiles.length ? data.profiles : state.profiles };
+    state = { variant: state.variant, mode: data.mode, profiles: data.profiles.length ? data.profiles : state.profiles };
     $('#opt-mode').checked = data.mode === 'cool';
     $('#ai-msg').textContent = '✅ Kész, lent átírhatod.';
     $('#ai-notes').hidden = !data.notes;
@@ -168,8 +169,57 @@ $('#ai-go').addEventListener('click', async () => {
   }
 });
 
+// ---- típusváltozat ----------------------------------------------------------
+function renderVariant() {
+  const v = variantOf(state);
+  $('#variants').innerHTML = Object.entries(VARIANTS).map(([k, x]) => `
+    <label class="variant ${k === state.variant ? 'on' : ''}">
+      <input type="radio" name="variant" value="${k}" ${k === state.variant ? 'checked' : ''}>
+      <b>${esc(x.name)}</b><span class="vbtns">${x.buttons.map((b) => `<kbd>${b}</kbd>`).join(' ')}</span>
+      <small class="muted">${esc(x.hint)}</small>
+    </label>`).join('');
+  $('#mode-row').hidden = !v.hasMode;
+  $('#opt-mode').closest('label').hidden = !v.hasMode;
+  $('#device').innerHTML = thermostatSvg(v);
+  renderCheat(v);
+}
+$('#variants').addEventListener('change', (e) => {
+  if (e.target.name !== 'variant') return;
+  state.variant = e.target.value;
+  renderVariant();
+  changed(false);
+});
+
+function renderCheat(v) {
+  const old = v.logic === 'fixed6';
+  const rows = [
+    ['A következő kapcsolásig', '`+`/`−`'],
+    old ? ['Party (1–9 óra)', '`+`/`−`, majd `DAY` annyiszor, ahány óra'] : ['Party (1–99 óra)', '`+`/`−`, `DAY`, `+`/`−` óraszám'],
+    ['Szabadság (1–99 nap)', '`+`/`−`, `HOLD` 2 mp, `+`/`−` napszám'],
+    ['Tartósan', '`+`/`−`, `HOLD` röviden'],
+    ['Vissza a programhoz', '`SET`'],
+  ];
+  const other = [
+    ['Program átnézése', '`PROG` többször, napváltás `+`/`−`, vége `SET`'],
+    ['Pontos idő', '`DAY` nap → `DAY` óra → `DAY` perc → `SET`'],
+    ...(v.hasMode ? [
+      ['Fűtés ↔ hűtés', '`SET` nyomva + `COPY`, `+`/`−`, `SET`'],
+      ['Komfort/takarék gyorsérték', '`SET` nyomva + `+` (vagy `−`), `+`/`−`, `SET`'],
+      ['Gombzár be/ki', '`+` és `−` együtt 5 mp'],
+      ['Hőmérő kalibrálása', '`DAY`, `HOLD`, `+`/`−` (±3 °C), `SET`'],
+    ] : []),
+    ...(v.radio ? [
+      ['Hatótáv-teszt', '`TEST` 2 mp-ig: 2 percig 5 mp-enként ki-be kapcsoló jelet küld, a vevőn a piros LED követi'],
+      ['Párosítás a vevővel', 'vevőn `M/A` ~10 mp (zöld LED villog), majd a termosztáton `SET` + `DAY` együtt ~10 mp. Csak ha nem működik a kapcsolat!'],
+    ] : []),
+    ['Világítás', v.hasMode ? '`LIGHT` (5 mp: minden gombnyomásra világít)' : '`LIGHT`'],
+    ['Gyári alaphelyzet', '`RESET` – a programot is törli'],
+  ];
+  const table = (r) => `<table class="cheat">${r.map(([a, b]) => `<tr><td>${a}</td><td>${md(b)}</td></tr>`).join('')}</table>`;
+  $('#cheat').innerHTML = `<h2>🖐️ Ideiglenes eltérés a programtól</h2>${table(rows)}<h2>⚙️ Egyebek (${esc(v.short)})</h2>${table(other)}`;
+}
+
 // ---- útmutató -------------------------------------------------------------
-$('#device').innerHTML = thermostatSvg();
 
 function startGuide() {
   plan = buildPlan(state, { setClock: $('#opt-clock').checked, useCopy: $('#opt-copy').checked, checkMode: $('#opt-mode').checked });
@@ -197,16 +247,20 @@ document.addEventListener('keydown', (e) => {
 function liveValues() {
   const now = new Date();
   const code = DAYS[(now.getDay() + 6) % 7];
-  return { nap: `${code} (${DAY_HU[code]})`, óra: String(now.getHours()).padStart(2, '0'), perc: String(now.getMinutes()).padStart(2, '0'), code, now };
+  return { nap: `${dayLabel(variantOf(state), code)} (${DAY_HU[code]})`, óra: String(now.getHours()).padStart(2, '0'), perc: String(now.getMinutes()).padStart(2, '0'), code, now };
 }
 
 function keyChip(k) {
   const how = { hold: 'nyomva', long: `${k.seconds || 3} mp`, repeat: 'többször', tap: '' }[k.how || 'tap'];
-  return `<span class="keychip"><kbd>${KEY_LABEL[k.key]}</kbd>${how ? `<small>${how}</small>` : ''}</span>`;
+  return `<span class="keychip"><kbd>${keyLabel(k.key)}</kbd>${how ? `<small>${how}</small>` : ''}</span>`;
 }
 
 function summaryHtml() {
-  const rows = plan.groups.map((g) => `<tr><th>${g.days.map((d) => DAY_SHORT[d]).join(', ')}</th>${g.switches.map((s, i) => `<td><small>PROG ${i}</small><br>${fmtTime(s.time)}<br><b>${fmtTemp(s.temp)} °C</b></td>`).join('')}</tr>`).join('');
+  const v = plan.variant, fixed = v.logic === 'fixed6';
+  const rows = plan.groups.map((g) => {
+    const pts = fixed ? g.slots : g.switches;
+    return `<tr><th>${g.days.map((d) => DAY_SHORT[d]).join(', ')}</th>${pts.map((s, i) => `<td class="${s.filler ? 'filler' : ''}" title="${s.filler ? 'kitöltés, nem vált hőfokot' : ''}"><small>${progLabel(v, fixed ? i + 1 : i)}</small><br>${fmtTime(s.time)}<br><b>${fmtTemp(s.temp)} °C</b></td>`).join('')}</tr>`;
+  }).join('');
   return `<table class="summary">${rows}</table>`;
 }
 
@@ -240,5 +294,6 @@ function renderStep() {
 
 // ---- indulás ------------------------------------------------------------------
 $('#opt-mode').checked = state.mode === 'cool';
+renderVariant();
 renderProfiles();
 renderWeek();
