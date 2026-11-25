@@ -216,7 +216,7 @@ footer a { color: var(--accent2); }
   .step-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; margin: 0; padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
     background: #fffffff2; box-shadow: 0 -2px 10px #0002; border-top: 0; backdrop-filter: blur(6px); }
   .keytip { display: none; }
-  #view-guide { padding-bottom: 90px; }
+  body.in-guide { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 }
 #next { min-width: 8.5em; white-space: nowrap; }
 #prev { min-width: 3.2em; }
@@ -237,3 +237,44 @@ footer a { color: var(--accent2); }
 .navmid { display: flex; align-items: center; gap: 8px; }
 #beep { font-size: 1.1rem; padding: 4px 6px; }
 @media (max-width: 860px) { .idle { top: auto; bottom: calc(96px + env(safe-area-inset-bottom)); } @keyframes idlein { from { transform: translate(-50%, 20px); opacity: 0; } } }
+
+/* pingvin társ */
+.peng { position: fixed; right: 16px; bottom: 12px; width: 72px; z-index: 25; cursor: pointer; user-select: none;
+  transform: translateX(var(--x, 0)); transition: transform 1.6s ease-in-out, bottom .3s; -webkit-tap-highlight-color: transparent; }
+.peng[hidden] { display: none; }
+.peng-svg { width: 100%; display: block; overflow: visible; transform-origin: 50% 100%; animation: peng-sway 3.2s ease-in-out infinite; }
+.face-left .peng-svg { scale: -1 1; }
+.peng svg g { transform-box: fill-box; }
+.peng-eyes { transform-origin: center; animation: peng-blink 4.5s infinite; }
+.peng-wing-l, .peng-wing-r { transform-origin: top center; }
+.walking .peng-svg { animation: peng-waddle .4s ease-in-out infinite; }
+.walking .peng-foot-l { animation: peng-step .4s infinite; }
+.walking .peng-foot-r { animation: peng-step .4s .2s infinite; }
+.hop .peng-svg { animation: peng-hop .7s ease-out; }
+.party .peng-svg { animation: peng-hop .6s ease-out 4; }
+.party .peng-wing-l { animation: peng-flap-l .2s ease-in-out 12 alternate; }
+.party .peng-wing-r { animation: peng-flap-r .2s ease-in-out 12 alternate; }
+.peng-snow, .peng-sweat { display: none; }
+.cold .peng-snow { display: inline; animation: peng-float 2.6s ease-in-out infinite; }
+.hot .peng-sweat { display: inline; animation: peng-drip 1.6s ease-in infinite; }
+.hot .peng-wing-r { animation: peng-flap-r .45s ease-in-out infinite alternate; }
+.peng-say { position: absolute; bottom: 45%; right: 100%; margin-right: 4px; width: max-content; max-width: min(230px, 60vw);
+  background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 6px 10px; font-size: .82rem; line-height: 1.35;
+  box-shadow: 0 4px 14px #0002; cursor: default; }
+@keyframes peng-sway { 0%, 100% { rotate: -2deg; } 50% { rotate: 2deg; } }
+@keyframes peng-waddle { 0%, 100% { rotate: -7deg; } 50% { rotate: 7deg; } }
+@keyframes peng-blink { 0%, 93%, 100% { scale: 1 1; } 96% { scale: 1 .1; } }
+@keyframes peng-step { 50% { translate: 0 -3px; } }
+@keyframes peng-hop { 30% { translate: 0 -24px; } 60% { translate: 0 0; } 78% { translate: 0 -6px; } 100% { translate: 0 0; } }
+@keyframes peng-flap-l { to { rotate: 35deg; } }
+@keyframes peng-flap-r { to { rotate: -35deg; } }
+@keyframes peng-float { 0%, 100% { translate: 0 0; opacity: .9; } 50% { translate: -4px 6px; opacity: .5; } }
+@keyframes peng-drip { 0% { translate: 0 0; opacity: 1; } 100% { translate: 0 14px; opacity: 0; } }
+.confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 40; }
+@media (max-width: 860px) {
+  .peng { width: 50px; right: 8px; }
+  body.in-guide .peng { bottom: calc(92px + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .peng, .peng * { animation: none !important; transition: none !important; }
+}

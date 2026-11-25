@@ -29,6 +29,8 @@ legyen, és az app végigvezet a beállításon a termosztát animált előlapj�
   Ha sokáig nem lépsz tovább, szól (hanggal is), mielőtt a termosztát magától kilépne a menüből.
   Billentyűk: Enter / szóköz / → = tovább, ← = vissza.
 - **Puska**: party, szabadság és tartós hőfok, gombzár, kalibrálás.
+- **Pingvin társ** 🐧: a sarokban totyog, a hőfokra reagál (hidegnél boldog, melegnél izzad), rákattintva tippet ad,
+  a végén konfetti. A láblécben kikapcsolható.
 - **Opcionális AI**: szabad szövegből („hétköznap 6–8 és 16–22 között 21,5 fok, egyébként 18”) tölti ki
   a programot. Kulcs nélkül ez a rész egyszerűen nem jelenik meg.
 

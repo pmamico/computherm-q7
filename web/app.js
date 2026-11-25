@@ -2,6 +2,7 @@ import { DAYS, DAY_HU, DAY_SHORT, PRESETS, VARIANTS, dayCells, cellsToProfile, D
 import { thermostatSvg, showStep, keyLabel } from './thermostat.js';
 import { mountDayEditor, tempColor } from './dayeditor.js';
 import { VERSION } from './version.js';
+import { mountPenguin, confetti } from './penguin.js';
 
 const $ = (s) => document.querySelector(s);
 const STORE = 'q7-state-v1';
@@ -22,6 +23,7 @@ function showView(name) {
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
   document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.view === name));
   if (name !== 'guide') { clearInterval(liveTimer); clearTimeout(idleTimer); hideIdle(); }
+  document.body.classList.toggle('in-guide', name === 'guide');
   window.scrollTo({ top: 0 });
 }
 document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => {
@@ -107,6 +109,8 @@ function renderWeek() {
     return `<div class="week-row"><span>${DAY_SHORT[d]}</span><div class="bar">${segs}</div><span class="badge ${n > 6 ? 'bad' : ''}">${n}/6</span></div>`;
   }).join('');
   $('#issues').innerHTML = c.issues.map((i) => `<li class="${i.level}">${esc(i.text)}</li>`).join('');
+  const temps = Object.values(c.days).filter(Boolean).flat().map((x) => x.temp);
+  if (temps.length) peng?.mood(Math.max(...temps));
   $('#go-guide').disabled = !c.ok;
 }
 
@@ -316,6 +320,7 @@ function armIdle() {
     $('#idle').innerHTML = `<span>⏱ <b>${warn} mp</b> telt el. Ha azóta nem nyomtál semmit a termosztáton, nyomd meg a <kbd>LIGHT</kbd>-ot, különben ${left} mp múlva kilép.</span><button id="idle-ok" class="primary" type="button">Megnyomtam</button>`;
     $('#idle').hidden = false;
     $('#btn-LIGHT')?.classList.add('nudge');
+    peng?.hop();
     $('#idle-ok').addEventListener('click', armIdle);
     beep();
   }, warn * 1000);
@@ -359,11 +364,22 @@ function renderStep() {
   document.querySelectorAll('#step-list li').forEach((li, i) => { li.classList.toggle('current', i === stepIdx); li.classList.toggle('done', i < stepIdx); });
   draw();
   armIdle();
+  if (stepIdx === plan.steps.length - 1) peng ? peng.celebrate() : confetti();
   if (s.live || plan.steps[stepIdx].lcd.time === 'now') liveTimer = setInterval(draw, 5000);
 }
 
 // ---- indulás ------------------------------------------------------------------
 $('#version').textContent = `v${VERSION}`;
+// pingvin társ (a láblécben kikapcsolható)
+let peng = null;
+function setPenguin(on) {
+  localStorage.setItem('q7-peng', on ? '1' : '0');
+  if (on && !peng) peng = mountPenguin();
+  if (!on && peng) { peng.destroy(); peng = null; }
+  $('#peng-toggle').textContent = on ? '🐧 pingvin elrejtése' : '🐧 pingvin vissza';
+}
+$('#peng-toggle').addEventListener('click', () => { setPenguin(!peng); renderWeek(); });
+setPenguin(localStorage.getItem('q7-peng') !== '0');
 $('#opt-mode').checked = state.mode === 'cool';
 renderVariant();
 renderProfiles();
